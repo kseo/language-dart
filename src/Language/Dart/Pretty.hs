@@ -614,19 +614,29 @@ instance Pretty CompilationUnit where
 ppMetadata :: Int -> [Annotation] -> Doc
 ppMetadata p metadata = vcat (map (prettyPrec p) metadata)
 
--- FIXME: Is it okay to ignore redirectedConstructor fields?
 instance Pretty ClassMember where
-  prettyPrec p (ConstructorDeclaration _ metadata isExternal isConst isFactory className mName parameters initializers _ mBody) =
+  prettyPrec p (ConstructorDeclaration _ metadata isExternal isConst isFactory className mName parameters initializers mRedirectedConstructor mBody) =
     ppMetadata p metadata $$
-      hsep [ optKeyword isExternal "external"
-           , optKeyword isConst "const"
-           , optKeyword isFactory "factory"
-           , hcat [ prettyPrec p className
-                  , maybe empty ((period <>) . prettyPrec p) mName
-                  , prettyPrec p parameters
-                  ]
-           , opt (not $ null initializers) (colon <+> vcat (ppIntersperse p comma initializers))
-           ] <> maybe semi (const empty) mBody $$ maybePP p mBody
+      case mRedirectedConstructor of
+        Nothing -> hsep [ optKeyword isExternal "external"
+                        , optKeyword isConst "const"
+                        , optKeyword isFactory "factory"
+                        , hcat [ prettyPrec p className
+                               , maybe empty ((period <>) . prettyPrec p) mName
+                               , prettyPrec p parameters
+                               ]
+                        , opt (not $ null initializers) (colon <+> vcat (ppIntersperse p comma initializers))
+                        ] <> maybe semi (const empty) mBody $$ maybePP p mBody
+        Just redirectedConstructor -> hsep [ optKeyword isConst "const"
+                                           , text "factory"
+                                           , hcat [ prettyPrec p className
+                                                  , maybe empty ((period <>) . prettyPrec p) mName
+                                                  , prettyPrec p parameters
+                                                  ]
+                                           , equals
+                                           , prettyPrec p redirectedConstructor <> semi
+                                           ]
+
   prettyPrec p (MethodDeclaration _ metadata isExternal methodModifier mReturnType propertyKeyword isOperator name mTypeParameters mParameters body) =
     ppMetadata p metadata $$
       hsep [ optKeyword isExternal "external"
