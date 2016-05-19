@@ -708,14 +708,12 @@ data NormalFormalParameter
   --
   --      fieldFormalParameter ::=
   --          ('final' [TypeName] | 'const' [TypeName] | 'var' | [TypeName])?
-  --          'this' '.' [SimpleIdentifier] ([TypeParameterList]? [FormalParameterList])?
+  --          'this' '.' [SimpleIdentifier]
   | FieldFormalParameter         (Maybe Comment) -- comment
                                  [Annotation] -- metadata
                                  (Maybe FinalConstVarOrType)
                                  Bool -- explicitThis
                                  SimpleIdentifier -- identifier
-                                 (Maybe TypeParameterList) -- typeParameters
-                                 (Maybe FormalParameterList) -- parameters
   -- | A simple formal parameter.
   --
   --      simpleFormalParameter ::=

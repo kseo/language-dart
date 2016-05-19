@@ -130,15 +130,9 @@ instance Pretty NormalFormalParameter where
                   ]
            ]
 
-  prettyPrec p (FieldFormalParameter _ metadata kind explicitThis identifier mTypeParameters mParameters) =
+  prettyPrec p (FieldFormalParameter _ metadata kind explicitThis identifier) =
     ppMetadata p metadata $$
-      hsep [ maybePP p kind
-           , hcat [ opt explicitThis (text "this.")
-                  , prettyPrec p identifier
-                  , maybePP p mTypeParameters
-                  , maybePP p mParameters
-                  ]
-           ]
+      maybePP p kind <+> opt explicitThis (text "this.") <> prettyPrec p identifier
 
   prettyPrec p (SimpleFormalParameter _ metadata kind identifier) =
     ppMetadata p metadata $$
