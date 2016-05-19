@@ -132,7 +132,9 @@ instance Pretty NormalFormalParameter where
 
   prettyPrec p (FieldFormalParameter _ metadata kind explicitThis identifier) =
     ppMetadata p metadata $$
-      maybePP p kind <+> opt explicitThis (text "this.") <> prettyPrec p identifier
+      hsep [ maybePP p kind
+           , opt explicitThis (text "this.") <> prettyPrec p identifier
+           ]
 
   prettyPrec p (SimpleFormalParameter _ metadata kind identifier) =
     ppMetadata p metadata $$
@@ -623,9 +625,8 @@ instance Pretty ClassMember where
                   , maybe empty ((period <>) . prettyPrec p) mName
                   , prettyPrec p parameters
                   ]
-           , opt (not $ null initializers) (colon <+> hsep (map (prettyPrec p) initializers))
-           , maybePP p mBody
-           ]
+           , opt (not $ null initializers) (colon <+> vcat (ppIntersperse p comma initializers))
+           ] <> maybe semi (const empty) mBody $$ maybePP p mBody
   prettyPrec p (MethodDeclaration _ metadata isExternal methodModifier mReturnType propertyKeyword isOperator name mTypeParameters mParameters body) =
     ppMetadata p metadata $$
       hsep [ optKeyword isExternal "external"
