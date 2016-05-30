@@ -18,7 +18,7 @@ library
   exposed-modules:     Language.Dart.Pretty
                        Language.Dart.Syntax
   build-depends:       base >= 4.7 && < 5
-                     , pretty
+                     , pretty >= 1.1
   default-language:    Haskell2010
 
 executable language-dart-exe
