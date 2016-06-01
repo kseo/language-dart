@@ -9,6 +9,7 @@ author:              Kwang Yul Seo
 maintainer:          kwangyul.seo@gmail.com
 copyright:           Kwang Yul Seo 2016
 category:            Language
+stability:           Experimental
 build-type:          Simple
 extra-source-files:  README.md
                      CHANGELOG.md
