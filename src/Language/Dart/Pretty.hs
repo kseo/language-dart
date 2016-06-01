@@ -1,5 +1,6 @@
 module Language.Dart.Pretty
-  ( prettyPrint
+  ( Pretty
+  , prettyPrint
   ) where
 
 import Data.Char (toLower)
