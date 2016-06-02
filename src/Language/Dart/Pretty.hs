@@ -139,7 +139,7 @@ instance Pretty NormalFormalParameter where
 
   prettyPrec p (SimpleFormalParameter _ metadata kind identifier) =
     ppMetadata p metadata $$
-      hsep [ prettyPrec p kind
+      hsep [ maybePP p kind
            , prettyPrec p identifier
            ]
 

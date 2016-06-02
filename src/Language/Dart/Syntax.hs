@@ -720,7 +720,7 @@ data NormalFormalParameter
   --          ('final' [TypeName] | 'var' | [TypeName])? [SimpleIdentifier]
   | SimpleFormalParameter        (Maybe Comment) -- comment
                                  [Annotation] -- metadata
-                                 FinalVarOrType
+                                 (Maybe FinalVarOrType)
                                  SimpleIdentifier -- identifier
   deriving (Eq, Show, Typeable, Generic, Data)
 

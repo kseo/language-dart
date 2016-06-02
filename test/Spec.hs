@@ -20,15 +20,15 @@ numType = tyName "num"
 
 formal :: TypeName -> String -> FormalParameter
 formal ty p = NormalFormalParameter' $
-  SimpleFormalParameter Nothing [] (FVTType ty) (SimpleIdentifier p)
+  SimpleFormalParameter Nothing [] (Just (FVTType ty)) (SimpleIdentifier p)
 
 posFormal :: TypeName -> String -> FormalParameter
 posFormal ty p = DefaultFormalParameter parameter Positional Nothing
-  where parameter = (SimpleFormalParameter Nothing [] (FVTType ty) (SimpleIdentifier p))
+  where parameter = (SimpleFormalParameter Nothing [] (Just (FVTType ty)) (SimpleIdentifier p))
 
 var :: String -> FormalParameter
 var p = NormalFormalParameter' $
-  SimpleFormalParameter Nothing [] FVTVar (SimpleIdentifier p)
+  SimpleFormalParameter Nothing [] (Just FVTVar) (SimpleIdentifier p)
 
 strLit :: String -> StringLiteral
 strLit = SingleStringLiteral' .  SimpleStringLiteral
