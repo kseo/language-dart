@@ -1,7 +1,10 @@
+{-# LANGUAGE QuasiQuotes #-}
+
 import Test.Hspec
 
 import Language.Dart.Pretty
 import Language.Dart.Syntax
+import Text.RawString.QQ
 
 intExp :: Integer -> Expression
 intExp = Literal' . IntegerLiteral
@@ -76,7 +79,7 @@ prettyPrintSpec =
                                 [ ShowCombinator [SimpleIdentifier "TypeName"]
                                 , ShowCombinator [SimpleIdentifier "ArgumentList"]
                                 ]
-      prettyPrint imp `shouldBe` "import \"package:analyzer/src/dart/ast/ast.dart\" as a show TypeName, show ArgumentList;"
+      prettyPrint imp `shouldBe` [r|import "package:analyzer/src/dart/ast/ast.dart" as a show TypeName, show ArgumentList;|]
 
     it "prints a function declaration" $ do
       let formals = FormalParameterList [formal numType "aNumber"]
@@ -93,10 +96,10 @@ prettyPrintSpec =
                                                                 (ArgumentList [arg])))])
           funExp = FunctionExpression Nothing formals body
           funDecl = FunctionDeclaration Nothing [] False Nothing Empty (SimpleIdentifier "printNumber") funExp
-      prettyPrint funDecl `shouldBe` "printNumber(num aNumber)\n\
-                                     \{\n\
-                                     \  print(\"The number is ${aNumber}.\");\n\
-                                     \}"
+      prettyPrint funDecl `shouldBe` [r|printNumber(num aNumber)
+{
+  print("The number is ${aNumber}.");
+}|]
 
     it "prints an optional position parameter" $ do
       let formals = FormalParameterList [formal strType "from", formal strType "msg", posFormal strType "device"]
@@ -124,15 +127,15 @@ prettyPrintSpec =
                                           ])
           funExp = FunctionExpression Nothing formals body
           funDecl = FunctionDeclaration Nothing [] False (Just strType) Empty (SimpleIdentifier "say") funExp
-      prettyPrint funDecl `shouldBe` "String say(String from, String msg, [String device])\n\
-                                     \{\n\
-                                     \  var result = \"${from} says ${msg}\";\n\
-                                     \  if (device != null)\n\
-                                     \  {\n\
-                                     \    result = \"${result} with a ${device}\";\n\
-                                     \  }\n\
-                                     \  return result;\n\
-                                     \}"
+      prettyPrint funDecl `shouldBe` [r|String say(String from, String msg, [String device])
+{
+  var result = "${from} says ${msg}";
+  if (device != null)
+  {
+    result = "${result} with a ${device}";
+  }
+  return result;
+}|]
 
     it "prints an expression function" $ do
       let body = ExpressionFunctionBody False (
@@ -154,12 +157,12 @@ prettyPrintSpec =
                            , EnumConstantDeclaration Nothing [] (SimpleIdentifier "blue")
                            ]
           enumDecl = EnumDeclaration Nothing [] (SimpleIdentifier "Color") enumConstDecls
-      prettyPrint enumDecl `shouldBe` "enum Color\n\
-                                      \{\n\
-                                      \  red,\n\
-                                      \  green,\n\
-                                      \  blue\n\
-                                      \}"
+      prettyPrint enumDecl `shouldBe` [r|enum Color
+{
+  red,
+  green,
+  blue
+}|]
 
     it "prints a for loop" $ do
       let variableList = VariableDeclarationList Nothing
@@ -179,10 +182,10 @@ prettyPrintSpec =
                                  (Just condition)
                                  [updater]
                                  body
-      prettyPrint forLoop `shouldBe` "for (var i = 0; i < 5; i++)\n\
-                                     \{\n\
-                                     \  message.write(\"!\");\n\
-                                     \}"
+      prettyPrint forLoop `shouldBe` [r|for (var i = 0; i < 5; i++)
+{
+  message.write("!");
+}|]
 
     it "prints a list literal" $ do
       let litExp = Literal' . TypedLiteral $ ListLiteral False Nothing [intExp 0, intExp 1, intExp 2]
@@ -204,26 +207,26 @@ prettyPrintSpec =
                           , SwitchDefault [] [funStmt "executeUnknown"]
                           ]
           switch = SwitchStatement (identExp "command") switchMembers
-      prettyPrint switch `shouldBe` "switch (command)\n\
-                                    \{\n\
-                                    \  case \"CLOSED\":\n\
-                                    \    executeClosed();\n\
-                                    \    break;\n\
-                                    \  case \"PENDING\":\n\
-                                    \    executePending();\n\
-                                    \    break;\n\
-                                    \  case \"APPROVED\":\n\
-                                    \    executeApproved();\n\
-                                    \    break;\n\
-                                    \  case \"DENIED\":\n\
-                                    \    executeDenied();\n\
-                                    \    break;\n\
-                                    \  case \"OPEN\":\n\
-                                    \    executeOpen();\n\
-                                    \    break;\n\
-                                    \  default:\n\
-                                    \    executeUnknown();\n\
-                                    \}"
+      prettyPrint switch `shouldBe` [r|switch (command)
+{
+  case "CLOSED":
+    executeClosed();
+    break;
+  case "PENDING":
+    executePending();
+    break;
+  case "APPROVED":
+    executeApproved();
+    break;
+  case "DENIED":
+    executeDenied();
+    break;
+  case "OPEN":
+    executeOpen();
+    break;
+  default:
+    executeUnknown();
+}|]
 
     it "prints a try statement" $ do
       let arg = Literal' . StringLiteral' . SingleStringLiteral' $
@@ -233,18 +236,18 @@ prettyPrintSpec =
           try = TryStatement (Block [funStmt "breedMoreLlamas"])
                              [CatchClause Nothing (SimpleIdentifier "e") Nothing (Block [funStmt1 "print" arg])]
                              (Just (Block [funStmt "cleanLlamaStalls"]))
-      prettyPrint try `shouldBe` "try\n\
-                                 \{\n\
-                                 \  breedMoreLlamas();\n\
-                                 \}\n\
-                                 \catch (e)\n\
-                                 \{\n\
-                                 \  print(\"Error: ${e}\");\n\
-                                 \}\n\
-                                 \finally\n\
-                                 \{\n\
-                                 \  cleanLlamaStalls();\n\
-                                 \}"
+      prettyPrint try `shouldBe` [r|try
+{
+  breedMoreLlamas();
+}
+catch (e)
+{
+  print("Error: ${e}");
+}
+finally
+{
+  cleanLlamaStalls();
+}|]
 
     it "prints a constructor" $ do
       let varDeclList ty name = VariableDeclarationList Nothing
@@ -317,23 +320,23 @@ prettyPrintSpec =
                                    Nothing
                                    Nothing
                                    classMembers
-      prettyPrint clazz `shouldBe` "class Point\n\
-                                   \{\n\
-                                   \  num x;\n\
-                                   \  num y;\n\
-                                   \  Point(this.x, this.y);\n\
-                                   \  Point.fromJson(Map json)\n\
-                                   \  {\n\
-                                   \    x = json[\"x\"];\n\
-                                   \    y = json[\"y\"];\n\
-                                   \  }\n\
-                                   \  num distanceTo(Point other)\n\
-                                   \  {\n\
-                                   \    var dx = x - other.x;\n\
-                                   \    var dy = y - other.y;\n\
-                                   \    return sqrt(dx * dx + dy * dy);\n\
-                                   \  }\n\
-                                   \}"
+      prettyPrint clazz `shouldBe` [r|class Point
+{
+  num x;
+  num y;
+  Point(this.x, this.y);
+  Point.fromJson(Map json)
+  {
+    x = json["x"];
+    y = json["y"];
+  }
+  num distanceTo(Point other)
+  {
+    var dx = x - other.x;
+    var dy = y - other.y;
+    return sqrt(dx * dx + dy * dy);
+  }
+}|]
 
     it "prints the initializer lists of a constructor" $ do
       let varDeclList ty name = VariableDeclarationList Nothing
@@ -379,15 +382,15 @@ prettyPrintSpec =
                                    Nothing
                                    classMembers
 
-      prettyPrint clazz `shouldBe` "class Point\n\
-                                   \{\n\
-                                   \  num x;\n\
-                                   \  num y;\n\
-                                   \  num distanceFromOrigin;\n\
-                                   \  Point(this.x, this.y) : x = x,\n\
-                                   \                          y = y,\n\
-                                   \                          distanceFromOrigin = sqrt(x * x + y * y);\n\
-                                   \}"
+      prettyPrint clazz `shouldBe` [r|class Point
+{
+  num x;
+  num y;
+  num distanceFromOrigin;
+  Point(this.x, this.y) : x = x,
+                          y = y,
+                          distanceFromOrigin = sqrt(x * x + y * y);
+}|]
 
     it "prints the implement clause" $ do
       let implements = ImplementsClause [tyName "Comparable", tyName "Location"]
@@ -400,9 +403,9 @@ prettyPrintSpec =
                                    Nothing
                                    (Just implements)
                                    []
-      prettyPrint clazz `shouldBe` "class Point implements Comparable, Location\n\
-                                  \{\n\
-                                  \}"
+      prettyPrint clazz `shouldBe` [r|class Point implements Comparable, Location
+{
+}|]
 
     it "prints the metadata" $ do
       let annotation = Annotation (SimpleIdentifier' (SimpleIdentifier "override")) Nothing Nothing
@@ -424,10 +427,10 @@ prettyPrintSpec =
                                          Nothing
                                          (Just methodFormals)
                                          (BlockFunctionBody Sync (Block []))
-      prettyPrint methodDecl `shouldBe` "@override\n\
-                                        \void noSuchMethod(Invocation mirror)\n\
-                                        \{\n\
-                                        \}"
+      prettyPrint methodDecl `shouldBe` [r|@override
+void noSuchMethod(Invocation mirror)
+{
+}|]
 
 main :: IO ()
 main = hspec $ do
