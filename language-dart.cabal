@@ -28,6 +28,7 @@ test-suite language-dart-test
   hs-source-dirs:      test
   main-is:             Spec.hs
   other-modules:       PrettySpec
+                       TestHelper
   build-depends:       base
                      , hspec
                      , language-dart
