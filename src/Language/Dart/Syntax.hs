@@ -88,7 +88,7 @@ data TypedLiteral
   -- | A list literal.
   --
   --      listLiteral ::=
-  --          'const'? ('<' [TypeName] '>')? '[' ([Expression] ','?)? ']'
+  --          'const'? ('<' [TypeName] '>')? '[' ([Expression] (',' [Expression])* ','?)? ']'
   | ListLiteral Bool -- isConst
                 (Maybe TypeArgumentList) -- typeArguments
                 [Expression] -- elements
@@ -128,7 +128,7 @@ data SingleStringLiteral
   --      rawStringLiteral ::=
   --          'r' basicStringLiteral
   --
-  --      simpleStringLiteral ::=
+  --      basicStringLiteral ::=
   --          multiLineStringLiteral
   --        | singleLineStringLiteral
   --
@@ -220,8 +220,8 @@ data Literal
   | SymbolLiteral [Token] -- components
   deriving (Eq, Show, Typeable, Generic, Data)
 
-data FinalConstVarOrType = FCVTFinal TypeName
-                         | FCVTConst TypeName
+data FinalConstVarOrType = FCVTFinal (Maybe TypeName)
+                         | FCVTConst (Maybe TypeName)
                          | FCVTType  TypeName
                          | FCVTVar
   deriving (Eq, Show, Typeable, Generic, Data)
@@ -249,7 +249,7 @@ data VariableDeclaration = VariableDeclaration SimpleIdentifier -- name
 --          finalConstVarOrType [VariableDeclaration] (',' [VariableDeclaration])*
 --
 --      finalConstVarOrType ::=
---        | 'final' [TypeName]?
+--          'final' [TypeName]?
 --        | 'const' [TypeName]?
 --        | 'var'
 --        | [TypeName]
@@ -387,7 +387,7 @@ data NamedCompilationUnitMember
 --        | [FunctionDeclaration]
 --        | [MethodDeclaration]
 --        | [VariableDeclaration]
---        | [VariableDeclaration]
+--        | [EnumDeclaration]
 data CompilationUnitMember
   -- | The declaration of one or more top-level variables of the same type.
   --

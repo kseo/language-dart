@@ -267,8 +267,8 @@ instance Pretty Label where
   prettyPrec p (Label label) = prettyPrec p label <> char ':'
 
 instance Pretty FinalConstVarOrType where
-  prettyPrec p (FCVTFinal type')  = text "final" <+> prettyPrec p type'
-  prettyPrec p (FCVTConst type')  = text "const" <+> prettyPrec p type'
+  prettyPrec p (FCVTFinal type')  = text "final" <+> maybe empty (prettyPrec p) type'
+  prettyPrec p (FCVTConst type')  = text "const" <+> maybe empty (prettyPrec p) type'
   prettyPrec p (FCVTType type')   = prettyPrec p type'
   prettyPrec p FCVTVar            = text "var"
 
