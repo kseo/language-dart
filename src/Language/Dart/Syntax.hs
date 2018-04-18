@@ -898,10 +898,13 @@ data SwitchMember
 --
 --      catchPart ::=
 --          'catch' '(' [SimpleIdentifier] (',' [SimpleIdentifier])? ')'
-data CatchClause = CatchClause (Maybe TypeName) -- exceptionType
-                               SimpleIdentifier -- exceptionParameter
+data CatchClause = CatchClause SimpleIdentifier -- exceptionParameter
                                (Maybe SimpleIdentifier) -- stackTraceParameter
                                Block -- body
+                 |  OnClause TypeName -- exceptionType
+                             (Maybe (SimpleIdentifier, -- exceptionParameter
+                                     Maybe SimpleIdentifier)) -- stackTraceParameter
+                             Block -- body
   deriving (Eq, Show, Typeable, Generic, Data)
 
 -- | A sequence of statements.
@@ -1192,7 +1195,7 @@ data Statement
   --          'for' '(' forLoopParts ')' [Statement]
   --
   --      forLoopParts ::=
-  --          forInitializerStatement ';' [Expression]? ';' [Expression]?
+  --          forInitializerStatement ';' [Expression]? ';' (expression (',' expression)*)?
   --
   --      forInitializerStatement ::=
   --          [DefaultFormalParameter]
@@ -1243,7 +1246,7 @@ data Statement
   -- | A try statement.
   --
   --      tryStatement ::=
-  --          'try' [Block] ([CatchClause]+ finallyClause? | finallyClause)
+  --          'try' [Block] (onPart+ finallyClause? | finallyClause)
   --
   --      finallyClause ::=
   --          'finally' [Block]
@@ -1275,7 +1278,7 @@ data Statement
   -- | An assert statement.
   --
   --      assertStatement ::=
-  --          'assert' '(' [Expression] ')' ';'
+  --          'assert' '(' [Expression] (',' expresion)? ')' ';'
   | AssertStatement Expression -- condition
                     (Maybe Expression) -- message
   -- | A yield statement.

@@ -289,12 +289,15 @@ instance Pretty VariableDeclarationList where
       prettyPrec p kind <+> hsep (ppIntersperse p comma variables)
 
 instance Pretty CatchClause where
-  prettyPrec p (CatchClause mExceptionType exceptionParameter mStackTraceParameter body) =
-    case mExceptionType of
-      Nothing -> text "catch" <+> parens (ppExceptionParameter p exceptionParameter mStackTraceParameter) $$ prettyPrec p body
-      Just exceptionType -> text "on" <+> prettyPrec p exceptionType $$ prettyPrec p body
+  prettyPrec p (CatchClause exceptionParameter mStackTraceParameter body) =
+      text "catch" <+> parens (ppExceptionParameter p exceptionParameter mStackTraceParameter) $$ prettyPrec p body
     where ppExceptionParameter p ep Nothing = prettyPrec p ep
           ppExceptionParameter p ep (Just stp) = hsep (ppIntersperse p comma [ep, stp])
+  prettyPrec p (OnClause exceptionType Nothing body) =
+     text "on" <+> prettyPrec p exceptionType $$ prettyPrec p body
+  prettyPrec p (OnClause exceptionType (Just (exceptionParameter, mStackTraceParameter)) body) =
+     text "on" <+> prettyPrec p exceptionType
+     <+> prettyPrec p (CatchClause exceptionParameter mStackTraceParameter body)
 
 instance Pretty SwitchMember where
   prettyPrec p (SwitchCase labels expression statements) =
