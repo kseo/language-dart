@@ -88,7 +88,7 @@ data TypedLiteral
   -- | A list literal.
   --
   --      listLiteral ::=
-  --          'const'? ('<' [TypeName] '>')? '[' ([Expression] (',' [Expression])* ','?)? ']'
+  --          'const'? ('<' [TypeName] (',' [TypeName])* '>')? '[' ([Expression] (',' [Expression])* ','?)? ']'
   | ListLiteral Bool -- isConst
                 (Maybe TypeArgumentList) -- typeArguments
                 [Expression] -- elements
@@ -1119,6 +1119,8 @@ data Expression
   --          [Expression] '.' [SimpleIdentifier]
   | PropertyAccess Expression -- target
                    SimpleIdentifier -- propertyName
+  | ConditionalPropertyAccess Expression -- target
+                              SimpleIdentifier -- propertyName
   -- | An expression that has a name associated with it. They are used in method
   --   invocations when there are named parameters.
   --
@@ -1154,7 +1156,8 @@ data Expression
   --
   --      indexExpression ::=
   --          [Expression] '[' [Expression] ']'
-  | IndexExpressionForCasecade Expression -- index
+  | PropertyAccessForCascade SimpleIdentifier -- index
+  | IndexExpressionForCascade Expression -- index
   | IndexExpressionForTarget   Expression -- target
                                Expression -- index
   -- | An await expression.

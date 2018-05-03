@@ -10,6 +10,8 @@ import Text.Printf (printf)
 
 import Language.Dart.Syntax
 
+import Prelude hiding ((<>))
+
 -- FIXME: Don't omit comments
 
 prettyPrint :: Pretty a => a -> String
@@ -487,6 +489,12 @@ instance Pretty Expression where
          , prettyPrec p propertyName
          ]
 
+  prettyPrec p (ConditionalPropertyAccess target propertyName) =
+    hcat [ prettyPrec p target
+         , text "?."
+         , prettyPrec p propertyName
+         ]
+
   prettyPrec p (NamedExpression name expression) =
     hsep [ prettyPrec p name <> colon
          , prettyPrec p expression
@@ -507,7 +515,8 @@ instance Pretty Expression where
     let sections = target:cascadeSections
      in parenPrec p 2 $ hsep (ppIntersperse 2 (text "..") sections)
 
-  prettyPrec p (IndexExpressionForCasecade index) = brackets (prettyPrec p index)
+  prettyPrec p (IndexExpressionForCascade index) = brackets (prettyPrec p index)
+  prettyPrec p (PropertyAccessForCascade propertyName) = prettyPrec p propertyName
 
   prettyPrec p (IndexExpressionForTarget target index) =
     prettyPrec p target <> brackets (prettyPrec p index)
