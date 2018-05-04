@@ -6,7 +6,7 @@ import Control.Applicative
 import Control.Monad (guard)
 import Data.Char (chr, isAlphaNum, isDigit, isHexDigit, isLetter, isSpace)
 import Data.List (intersperse)
-import Data.Monoid (Endo(..))
+import Data.Monoid (Endo(..), (<>))
 import Numeric (readHex)
 import Text.Grampa hiding (Grammar)
 import Text.Grampa.ContextFree.LeftRecursive (Parser)
