@@ -117,8 +117,6 @@ data Grammar p = Grammar {
    arguments :: p ArgumentList,
    commentReference :: p CommentReference,
    comment :: p String,
-   endOfLineComment :: p String,
-   blockComment :: p String,
    documentationComment :: p String,
    metadata :: p [Annotation],
    annotation :: p Annotation,
@@ -235,20 +233,34 @@ $(Rank2.TH.deriveAll ''Grammar)
 
 instance Lexical Grammar where
    type LexicalConstraint p Grammar s = (s ~ String, p ~ Parser)
-   lexicalComment = try (string "(*"
-                         *> skipMany (lexicalComment
-                                      <|> notFollowedBy (string "*)") <* anyToken <* takeCharsWhile isCommentChar)
-                         <* string "*)")
-      where isCommentChar c = c /= '*' && c /= '('
+   lexicalComment = () <$ (endOfLineComment <|> blockComment)
    lexicalWhiteSpace = takeCharsWhile isSpace *> skipMany (lexicalComment *> takeCharsWhile isSpace)
    isIdentifierStartChar c = isLetter c || c == '_' || c == '$'
    isIdentifierFollowChar c = isAlphaNum c || c == '_' || c == '$'
    identifierToken word = lexicalToken (do w <- word
                                            guard (w `notElem` reservedWords)
                                            return w)
-                          
+
+endOfLineComment, blockComment :: Parser Grammar String String
+endOfLineComment= string "//" *> takeCharsWhile (/= '\n') <* char '\n'
+blockComment=
+      string "/--  "
+   *> concatMany (notFollowedBy (string "*/") *> anyToken <> takeCharsWhile (/= '*'))
+   <* string "*/"
+
 reservedWords :: [String]
-reservedWords = undefined
+reservedWords = ["abstract", "as", "assert", "async", "await", "break",
+                 "case", "catch", "class", "const", "continue", "covariant", 
+                 "default", "deferred", "do", "dynamic",
+                 "else", "enum", "export", "extends", "external", 
+                 "factory", "false", "final", "finally", "for", "function",
+                 "get", "hide", 
+                 "if", "implements", "import", "in", "is", "library", 
+                 "new", "null", "of", "on", "operator", 
+                 "part", "rethrow", "return", 
+                 "set", "show", "static", "super", "switch", "sync", 
+                 "this", "throw", "true", "try", "typedef", 
+                 "var", "void", "while", "with", "yield"]
 
 grammar :: GrammarBuilder Grammar Grammar Parser String
 grammar Grammar{..} = Grammar{
@@ -382,7 +394,7 @@ grammar Grammar{..} = Grammar{
         <|> FCVTVar <$ keyword "var"
         <|> FCVTType <$> typeName,
    declaredIdentifier=
-        DeclaredIdentifier Nothing <$> ((:[]) <$> annotation) <*> finalConstVarOrType <*> simpleIdentifier,
+        DeclaredIdentifier Nothing <$> metadata <*> finalConstVarOrType <*> simpleIdentifier,
    functionDeclaration=
         (FunctionDeclaration Nothing [] True <$ keyword "external") <**> functionSignature <*> pure EmptyFunctionBody
         <|> pure (FunctionDeclaration Nothing [] False) <**> functionSignature <*> functionBody,
@@ -528,7 +540,7 @@ grammar Grammar{..} = Grammar{
    -- | An export directive.
    exportDirective=
         ExportDirective Nothing
-        <$> ((:[]) <$> annotation)
+        <$> metadata
         <*  keyword "export"
         <*> stringLiteral
         <*> pure []  -- configurations
@@ -537,7 +549,7 @@ grammar Grammar{..} = Grammar{
    -- | An import directive.
    importDirective=
         (ImportDirective Nothing
-         <$> ((:[]) <$> annotation)
+         <$> metadata
          <*  keyword "import"
          <*> stringLiteral
          <*> pure []  -- configurations
@@ -545,7 +557,7 @@ grammar Grammar{..} = Grammar{
          <*> optional (keyword "as" *> simpleIdentifier)
          <|>
          ImportDirective Nothing
-          <$> ((:[]) <$> annotation)
+          <$> metadata
           <*  keyword "import"
           <*> stringLiteral
           <*> pure []  -- configurations
@@ -559,7 +571,7 @@ grammar Grammar{..} = Grammar{
    -- | A part directive.
    partDirective=
         PartDirective Nothing
-        <$> ((:[]) <$> annotation)
+        <$> metadata
         <*  keyword "part"
         <*> stringLiteral
         <*  delimiter ";",
@@ -570,7 +582,7 @@ grammar Grammar{..} = Grammar{
    -- | A part-of directive.
    partOfDirective=
         PartOfDirective Nothing
-        <$> ((:[]) <$> annotation)
+        <$> metadata
         <*  keyword "part"
         <*  keyword "of"
         <*> libraryIdentifier
@@ -578,7 +590,7 @@ grammar Grammar{..} = Grammar{
    -- | A library directive.
    libraryDirective=
         LibraryDirective Nothing
-        <$> ((:[]) <$> annotation)
+        <$> metadata
         <*  keyword "library"
         <*> libraryIdentifier
         <*  delimiter ";",
@@ -741,12 +753,6 @@ grammar Grammar{..} = Grammar{
         endOfLineComment
         <|> blockComment
         <|> documentationComment,
-   endOfLineComment=
-        string "//" *> takeCharsWhile (/= '\n') <* char '\n',
-   blockComment=
-        string "/--  "
-        *> concatMany (notFollowedBy (string "*/") *> anyToken <> takeCharsWhile (/= '*'))
-        <* string "*/",
    documentationComment=
         string "/--  *"
         *> concatMany (notFollowedBy (string "*/") *> anyToken <> takeCharsWhile (\c-> c /= '*' && c /= '[')
@@ -1355,7 +1361,7 @@ grammar Grammar{..} = Grammar{
    -- order even if lexical order does not conform to the restrictions of the
    -- grammar.
    compilationUnit=
-        directives <*> declarations,
+        Grampa.lexicalWhiteSpace *> directives <*> declarations,
    directives=
         CompilationUnit
         <$> optional scriptTag
