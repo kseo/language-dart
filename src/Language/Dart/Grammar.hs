@@ -48,10 +48,10 @@ grammar Grammar{..} = Grammar{
        <|> delimiter "$" *> delimiter "{" *> (InterpolationExpression <$> expression) <* delimiter "}",
    -- | A non-empty substring of an interpolated string.
    interpolationStringNoSingleQuote=
-         InterpolationString <$> (takeCharsWhile (`notElem` "\\\'$\r\n")
+         InterpolationString <$> (takeCharsWhile1 (`notElem` "\\\'$\r\n")
                                   <|> (:[]) <$> characterEscape),
    interpolationStringNoDoubleQuote=
-         InterpolationString <$> (takeCharsWhile (`notElem` "\\\"$\r\n")
+         InterpolationString <$> (takeCharsWhile1 (`notElem` "\\\"$\r\n")
                                   <|> (:[]) <$> characterEscape),
    characterEscape= string "\\" *> ('\b' <$ string "b"
                                     <|> '\f' <$ string "b"
@@ -67,25 +67,26 @@ grammar Grammar{..} = Grammar{
                                                                 <*  string "}"))
                                     <|> satisfyChar (`notElem` "\r\n")),
    singleStringLiteral=
-           SimpleStringLiteral <$> simpleStringLiteral
-       <|> StringInterpolation <$> stringInterpolation,
+        SingleStringLiteral'
+        <$> (    SimpleStringLiteral <$> simpleStringLiteral
+             <|> StringInterpolation <$> stringInterpolation),
    -- | A string literal expression that does not contain any interpolations.
    simpleStringLiteral=
            rawStringLiteral
        <|> basicStringLiteral,
    rawStringLiteral=
-           string "r" *> (string "'''" 
-                              *> concatMany (takeCharsWhile (/= '\'')
-                                             <|> string "'" <* notFollowedBy (string "''"))
-                            <* string "'''"
-                          <|> string "\"\"\""
-                              *> concatMany (takeCharsWhile (/= '\"')
-                                             <|> string "\"" <* notFollowedBy (string "\"\""))
-                          <|> string "'" *> takeCharsWhile (`notElem` "\'\n") <* string "'"
-                          <|> string "\"" *> takeCharsWhile (`notElem` "\"\n") <* string "\""),
+        lexicalToken $
+        string "r" *> (string "'''"
+                           *> concatMany (takeCharsWhile (/= '\'')
+                                          <|> string "'" <* notFollowedBy (string "''"))
+                         <* string "'''"
+                       <|> string "\"\"\""
+                           *> concatMany (takeCharsWhile (/= '\"')
+                                          <|> string "\"" <* notFollowedBy (string "\"\""))
+                       <|> string "'" *> takeCharsWhile (`notElem` "\'\n") <* string "'"
+                       <|> string "\"" *> takeCharsWhile (`notElem` "\"\n") <* string "\""),
    basicStringLiteral=
-           multiLineStringLiteral
-       <|> singleLineStringLiteral,
+      lexicalToken (multiLineStringLiteral <|> singleLineStringLiteral),
    multiLineStringLiteral=
            string "'''" *> concatMany (takeCharsWhile (`notElem` "\\\'$")
                                        <|> string "'" <* notFollowedBy (string "''")) <* string "'''"
@@ -96,18 +97,24 @@ grammar Grammar{..} = Grammar{
        <|> string "\"" *> takeCharsWhile (`notElem` "\\\"$\r\n") <* string "\"",
    -- | A string interpolation literal.
    stringInterpolation=
-           string "'" *> many (interpolationExpression <|> interpolationStringNoSingleQuote) <* string "'"
-       <|> string "\"" *> many (interpolationExpression <|> interpolationStringNoDoubleQuote) <* string "\"",
+      lexicalToken $
+            (:) <$  string "'"
+                <*> (interpolationExpression <|> interpolationStringNoSingleQuote)
+                <*> some (interpolationExpression <|> interpolationStringNoSingleQuote)
+                <*  string "'"
+        <|> (:) <$  string "\""
+                <*> (interpolationExpression <|> interpolationStringNoDoubleQuote)
+                <*> some (interpolationExpression <|> interpolationStringNoDoubleQuote)
+                <*  string "\"",
    stringLiteral=
-           SingleStringLiteral' <$> singleStringLiteral
+           singleStringLiteral
        <|> AdjacentStrings <$> adjacentStrings,
    -- | Two or more string literals that are implicitly concatenated because of being
    --  adjacent (separated only by whitespace).
    --  While the grammar only allows adjacent strings when all of the strings are of
    --  the same kind (single line or multi-line), this class doesn't enforce that
    --  restriction.
-   adjacentStrings=
-           (:) <$> stringLiteral <*> some stringLiteral,
+   adjacentStrings= (:) <$> singleStringLiteral <*> some singleStringLiteral,
    literal=
            BooleanLiteral <$> booleanLiteral
        <|> DoubleLiteral <$> doubleLiteral
@@ -118,15 +125,18 @@ grammar Grammar{..} = Grammar{
        <|> SymbolLiteral <$> symbolLiteral,
     -- A boolean literal expression.
    booleanLiteral=
-           False <$ keyword "false" <|> True <$ keyword "true",
+        False <$ keyword "false" <|> True <$ keyword "true",
     -- A floating point literal expression.
    doubleLiteral=
+        lexicalToken $
         read <$> ((takeCharsWhile1 isDigit <|> pure "0") <> string "." <> takeCharsWhile isDigit <> moptional exponent
                    <|> takeCharsWhile1 isDigit <> exponent),
    exponent=
+        lexicalToken $
         (string "e" <|> string "E") <> moptional (string "+" <|> string "-") <> takeCharsWhile1 isDigit,
    -- | An integer literal expression.
    integerLiteral=
+        lexicalToken $
         decimalIntegerLiteral
         <|> hexadecimalIntegerLiteral,
    decimalIntegerLiteral=

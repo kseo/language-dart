@@ -26,7 +26,7 @@ data Grammar p = Grammar {
    interpolationStringNoSingleQuote :: p InterpolationElement,
    interpolationStringNoDoubleQuote :: p InterpolationElement,
    characterEscape :: p Char,
-   singleStringLiteral :: p SingleStringLiteral,
+   singleStringLiteral :: p StringLiteral,
    simpleStringLiteral :: p String,
    rawStringLiteral :: p String,
    basicStringLiteral :: p String,
