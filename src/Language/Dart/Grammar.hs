@@ -18,6 +18,7 @@ import Text.Parser.Token (braces, brackets, parens)
 import Language.Dart.GrammarDeclaration (Grammar(..), blockComment, endOfLineComment)
 import Language.Dart.Syntax
 
+import Debug.Trace
 import Prelude hiding (exponent)
 
 grammar :: GrammarBuilder Grammar Grammar Parser String
@@ -120,8 +121,8 @@ grammar Grammar{..} = Grammar{
            False <$ keyword "false" <|> True <$ keyword "true",
     -- A floating point literal expression.
    doubleLiteral=
-        read <$> (takeCharsWhile1 isDigit <> moptional (string "." <> takeCharsWhile isDigit) <> moptional exponent
-                  <|> string "." <> takeCharsWhile1 isDigit <> moptional exponent),
+        read <$> ((takeCharsWhile1 isDigit <|> pure "0") <> string "." <> takeCharsWhile isDigit <> moptional exponent
+                   <|> takeCharsWhile1 isDigit <> exponent),
    exponent=
         (string "e" <|> string "E") <> moptional (string "+" <|> string "-") <> takeCharsWhile1 isDigit,
    -- | An integer literal expression.
@@ -129,7 +130,7 @@ grammar Grammar{..} = Grammar{
         decimalIntegerLiteral
         <|> hexadecimalIntegerLiteral,
    decimalIntegerLiteral=
-        read <$> takeCharsWhile1 isDigit,
+        read <$> takeCharsWhile1 isDigit <* notSatisfyChar (`elem` ".eE"),
    hexadecimalIntegerLiteral=
         fst . head . readHex <$>
         (string "0x" *> takeCharsWhile1 isHexDigit
