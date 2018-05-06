@@ -255,15 +255,12 @@ grammar Grammar{..} = Grammar{
            <*  delimiter ":" 
            <*> ((:[]) <$> (RedirectingConstructorInvocation <$ keyword "this"
                            <*> optional (delimiter "." *> simpleIdentifier)
-                           <*> arguments))
+                           <*> argumentList))
            <*> pure Nothing
            <*> pure Nothing,
    constructorSignature=
        (uncurry <$> (ConstructorDeclaration Nothing []
-                    <$> flag (keyword "external") <*> pure False <*> pure False)
-                <*> constructorName
-        <|> uncurry <$> (ConstructorDeclaration Nothing []
-                         <$> flag (keyword "external") <*> pure False <*> (True <$ keyword "factory"))
+                         <$> flag (keyword "external") <*> flag (keyword "const") <*> (True <$ keyword "factory"))
                     <*> factoryName
         <|> uncurry <$> (ConstructorDeclaration Nothing []
                          <$> flag (keyword "external") <*> flag (keyword "const") <*> pure False)
@@ -374,7 +371,7 @@ grammar Grammar{..} = Grammar{
         RedirectingConstructorInvocation
         <$ keyword "this"
         <*> optional (delimiter "." *> simpleIdentifier)
-        <*> arguments,
+        <*> argumentList,
    -- | The initialization of a field within a constructor's initialization list.
    fieldInitializer=
         ConstructorFieldInitializer
@@ -707,13 +704,12 @@ grammar Grammar{..} = Grammar{
       InstanceCreationExpression NCNew 
       <$  keyword "new"
       <*> constructorDesignation
-      <*> arguments,
-
+      <*> argumentList,
    constObjectExpression=
       InstanceCreationExpression NCConst 
       <$  keyword "const" 
       <*> constructorDesignation
-      <*> arguments,
+      <*> argumentList,
 
    --arguments= parens (argumentList <* optional (keyword ",")),
 
@@ -861,7 +857,7 @@ grammar Grammar{..} = Grammar{
        <|> argumentPart,
    argumentPart=
        Endo . (InvocationExpression .) 
-       <$> (flip <$> (flip FunctionExpressionInvocation <$> optional typeArguments) <*> arguments),
+       <$> (flip <$> (flip FunctionExpressionInvocation <$> optional typeArguments) <*> argumentList),
    incrementOperator=
            delimiter "++"
        <|> delimiter "--",
