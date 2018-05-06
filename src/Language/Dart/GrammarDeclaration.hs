@@ -5,7 +5,7 @@ module Language.Dart.GrammarDeclaration where
 import Control.Applicative
 import Control.Monad (guard)
 import Data.Char (isAlphaNum, isLetter, isSpace)
-import Data.Monoid (Endo(..), (<>))
+import Data.Monoid (Dual(..), Endo(..), (<>))
 import Text.Grampa hiding (Grammar)
 import Text.Grampa.ContextFree.LeftRecursive (Parser)
 import qualified Text.Grampa as Lexical (identifier)
@@ -165,12 +165,12 @@ data Grammar p = Grammar {
 --   cascadeExpression :: p Expression,
    cascadeSection :: p Expression,
    cascadeSelector :: p Expression,
-   selector :: p (Endo Expression),
+   selector :: p (Dual (Endo Expression)),
    assignableExpression :: p Expression,
-   assignableSelector :: p (Endo Expression),
-   assignableSelectorPart :: p (Endo Expression),
-   unconditionalAssignableSelector :: p (Endo Expression),
-   argumentPart :: p (Endo Expression),
+   assignableSelector :: p (Dual (Endo Expression)),
+   assignableSelectorPart :: p (Dual (Endo Expression)),
+   unconditionalAssignableSelector :: p (Dual (Endo Expression)),
+   argumentPart :: p (Dual (Endo Expression)),
    ifNullExpression :: p Expression,
    logicalOrExpression :: p Expression,
    logicalAndExpression :: p Expression,

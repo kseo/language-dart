@@ -7,7 +7,7 @@ import Control.Applicative
 import Control.Monad (guard)
 import Data.Char (chr, isAlphaNum, isDigit, isHexDigit, isLetter, isSpace)
 import Data.List (intersperse)
-import Data.Monoid (Endo(..), (<>))
+import Data.Monoid (Dual(..), Endo(..), (<>))
 import Numeric (readHex)
 import Text.Grampa hiding (Grammar)
 import Text.Grampa.ContextFree.LeftRecursive (Parser)
@@ -661,7 +661,7 @@ grammar Grammar{..} = Grammar{
        <|> conditionalExpression,
    primary=
            thisExpression
-       <|> SuperExpression <$ keyword "super" <**> (appEndo <$> unconditionalAssignableSelector)
+       <|> SuperExpression <$ keyword "super" <**> (appEndo . getDual <$> unconditionalAssignableSelector)
        <|> constObjectExpression
        <|> newExpression
        <|> FunctionExpression' <$> functionPrimary
@@ -718,8 +718,8 @@ grammar Grammar{..} = Grammar{
    --namedArgument= undefined, -- :    label expression
 
    cascadeSection=
-       delimiter ".." *> cascadeSelector <**> (appEndo <$> concatMany argumentPart)
-            <**> (appEndo <$> concatMany (assignableSelector <> concatMany argumentPart))
+       delimiter ".." *> cascadeSelector <**> (appEndo . getDual <$> concatMany argumentPart)
+            <**> (appEndo . getDual <$> concatMany (assignableSelector <> concatMany argumentPart))
             <**> (flip AssignmentExpression <$> assignmentOperator <*> expressionWithoutCascade <|> pure id),
    cascadeSelector=
            IndexExpressionForCascade <$> brackets expression
@@ -850,13 +850,13 @@ grammar Grammar{..} = Grammar{
 
    postfixExpression=
            PostfixExpression <$> assignableExpression <*> postfixOperator
-       <|> primary <**> (appEndo <$> concatMany selector),
+       <|> primary <**> (appEndo . getDual <$> concatMany selector),
    postfixOperator= incrementOperator,
    selector=
            assignableSelector
        <|> argumentPart,
    argumentPart=
-       Endo . (InvocationExpression .) 
+       Dual . Endo . (InvocationExpression .) 
        <$> (flip <$> (flip FunctionExpressionInvocation <$> optional typeArguments) <*> argumentList),
    incrementOperator=
            delimiter "++"
@@ -883,20 +883,20 @@ grammar Grammar{..} = Grammar{
    -- relationalOperator, not the beginning of typeArguments.
 
    assignableExpression=
-           SuperExpression <$ keyword "super" <**> (appEndo <$> unconditionalAssignableSelector)
+           SuperExpression <$ keyword "super" <**> (appEndo . getDual <$> unconditionalAssignableSelector)
    --    <|> (typeName typeArguments '.' identifier '(') =>
    --         constructorInvocation
    --         ((assignableSelectorPart) => assignableSelectorPart)+
-       <|> primary <**> (appEndo <$> concatSome assignableSelectorPart)
+       <|> primary <**> (appEndo . getDual <$> concatSome assignableSelectorPart)
        <|> Identifier' <$> identifier,
    assignableSelectorPart=
        concatMany argumentPart <> assignableSelector,
    unconditionalAssignableSelector=
-           Endo . flip IndexExpressionForTarget <$> (delimiter "[" *> expression <* delimiter "]")
-       <|> Endo . flip PropertyAccess <$> (delimiter "." *> simpleIdentifier),
+           Dual . Endo . flip IndexExpressionForTarget <$> (delimiter "[" *> expression <* delimiter "]")
+       <|> Dual . Endo . flip PropertyAccess <$> (delimiter "." *> simpleIdentifier),
    assignableSelector=
            unconditionalAssignableSelector
-       <|> Endo . flip ConditionalPropertyAccess <$> (delimiter "?." *> simpleIdentifier),
+       <|> Dual . Endo . flip ConditionalPropertyAccess <$> (delimiter "?." *> simpleIdentifier),
 
    namedExpression=
       NamedExpression <$> label <*> expression,
