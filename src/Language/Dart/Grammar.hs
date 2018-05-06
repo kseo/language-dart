@@ -237,9 +237,10 @@ instance Lexical Grammar where
    lexicalWhiteSpace = takeCharsWhile isSpace *> skipMany (lexicalComment *> takeCharsWhile isSpace)
    isIdentifierStartChar c = isLetter c || c == '_' || c == '$'
    isIdentifierFollowChar c = isAlphaNum c || c == '_' || c == '$'
-   identifierToken word = lexicalToken (do w <- word
-                                           guard (w `notElem` reservedWords)
-                                           return w)
+   identifierToken word = lexicalToken $
+                          try (do w <- word
+                                  guard (w `notElem` reservedWords)
+                                  return w)
 
 endOfLineComment, blockComment :: Parser Grammar String String
 endOfLineComment= string "//" *> takeCharsWhile (/= '\n') <* char '\n'
@@ -504,7 +505,7 @@ grammar Grammar{..} = Grammar{
        <*> optional (delimiter "=" *> constructorDesignation),
    constructorDesignation=
       ConstructorName
-      <$> typeName 
+      <$> typeName
       <*> optional (delimiter "." *> simpleIdentifier),
    constructorName=
        (,) <$> (SimpleIdentifier' <$> simpleIdentifier) <*> optional (delimiter "." *> simpleIdentifier),
@@ -770,7 +771,8 @@ grammar Grammar{..} = Grammar{
    label=
         Label <$> simpleIdentifier <* delimiter ":",
    typeName=
-        TypeName <$> identifier <*> optional typeArguments,
+        TypeName <$> (identifier <|> SimpleIdentifier' . SimpleIdentifier <$> lexicalToken (string "void"))
+                 <*> optional typeArguments,
    typeArguments=
         TypeArgumentList
         <$  delimiter "<"
@@ -840,7 +842,7 @@ grammar Grammar{..} = Grammar{
    -- | An empty function body, which can only appear in constructors or abstract
    -- methods.
    emptyFunctionBody=
-        EmptyFunctionBody <$ string ";",
+        EmptyFunctionBody <$ delimiter ";",
    -- | A function body consisting of a single expression.
    expressionFunctionBody=
         ExpressionFunctionBody
@@ -885,7 +887,8 @@ grammar Grammar{..} = Grammar{
            FunctionExpression' <$> functionExpression
        <|> throwExpression
        <|> AssignmentExpression <$> assignableExpression <*> assignmentOperator <*> expression
-       <|> CascadeExpression <$> conditionalExpression <*> many cascadeSection,
+       <|> CascadeExpression <$> conditionalExpression <*> many cascadeSection
+       <?> "an expression",
    expressionWithoutCascade=
            FunctionExpression' <$> functionExpressionWithoutCascade
        <|> throwExpressionWithoutCascade
@@ -934,7 +937,7 @@ grammar Grammar{..} = Grammar{
 
    newExpression= 
       InstanceCreationExpression NCNew 
-      <$  keyword "new" 
+      <$  keyword "new"
       <*> constructorDesignation
       <*> arguments,
 
