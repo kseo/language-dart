@@ -77,20 +77,20 @@ grammar Grammar{..} = Grammar{
    rawStringLiteral=
         lexicalToken $
         string "r" *> (string "'''"
-                           *> concatMany (takeCharsWhile (/= '\'')
+                           *> concatMany (takeCharsWhile1 (/= '\'')
                                           <|> string "'" <* notFollowedBy (string "''"))
                          <* string "'''"
                        <|> string "\"\"\""
-                           *> concatMany (takeCharsWhile (/= '\"')
+                           *> concatMany (takeCharsWhile1 (/= '\"')
                                           <|> string "\"" <* notFollowedBy (string "\"\""))
                        <|> string "'" *> takeCharsWhile (`notElem` "\'\n") <* string "'"
                        <|> string "\"" *> takeCharsWhile (`notElem` "\"\n") <* string "\""),
    basicStringLiteral=
       lexicalToken (multiLineStringLiteral <|> singleLineStringLiteral),
    multiLineStringLiteral=
-           string "'''" *> concatMany (takeCharsWhile (`notElem` "\\\'$")
+           string "'''" *> concatMany (takeCharsWhile1 (`notElem` "\\\'$")
                                        <|> string "'" <* notFollowedBy (string "''")) <* string "'''"
-       <|> string "\"\"\"" *> concatMany (takeCharsWhile (`notElem` "\\\"$")
+       <|> string "\"\"\"" *> concatMany (takeCharsWhile1 (`notElem` "\\\"$")
                                           <|> string "\"" <* notFollowedBy (string "\"\"")) <* string "\"\"\"",
    singleLineStringLiteral=
            string "'" *> takeCharsWhile (`notElem` "\\\'$\r\n") <* string "'"
@@ -99,12 +99,12 @@ grammar Grammar{..} = Grammar{
    stringInterpolation=
       lexicalToken $
             (:) <$  string "'"
-                <*> (interpolationExpression <|> interpolationStringNoSingleQuote)
-                <*> some (interpolationExpression <|> interpolationStringNoSingleQuote)
+                <*> (interpolationExpression <|> interpolationStringNoSingleQuote <* notSatisfyChar (== '\''))
+                <*> many (interpolationExpression <|> interpolationStringNoSingleQuote)
                 <*  string "'"
         <|> (:) <$  string "\""
-                <*> (interpolationExpression <|> interpolationStringNoDoubleQuote)
-                <*> some (interpolationExpression <|> interpolationStringNoDoubleQuote)
+                <*> (interpolationExpression <|> interpolationStringNoDoubleQuote <* notSatisfyChar (== '"'))
+                <*> many (interpolationExpression <|> interpolationStringNoDoubleQuote)
                 <*  string "\"",
    stringLiteral=
            singleStringLiteral
