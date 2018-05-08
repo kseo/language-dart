@@ -136,6 +136,7 @@ data Grammar p = Grammar {
    expressionFunctionBody :: p FunctionBody,
    nativeFunctionBody :: p FunctionBody,
    functionExpression :: p FunctionExpression,
+   functionExpressionBody :: p FunctionBody,
    functionExpressionWithoutCascade :: p FunctionExpression,
    functionExpressionWithoutCascadeBody :: p FunctionBody,
    functionPrimary :: p FunctionExpression,

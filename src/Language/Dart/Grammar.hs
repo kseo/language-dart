@@ -165,8 +165,9 @@ grammar Grammar{..} = Grammar{
    declaredIdentifier=
         DeclaredIdentifier Nothing <$> metadata <*> finalConstVarOrType <*> simpleIdentifier,
    functionDeclaration=
-        (FunctionDeclaration Nothing [] True <$ keyword "external") <**> functionSignature <*> pure EmptyFunctionBody
-        <|> pure (FunctionDeclaration Nothing [] False) <**> functionSignature <*> functionBody,
+            (FunctionDeclaration Nothing <$> metadata <*> pure True <* keyword "external")
+            <**> functionSignature <*> pure EmptyFunctionBody
+        <|> (FunctionDeclaration Nothing <$> metadata <*> pure False) <**> functionSignature <*> functionBody,
    functionSignature= let applySignature returnType propKwd name typeParams params f body = 
                              f returnType propKwd name (FunctionExpression typeParams params body)
                       in applySignature 
@@ -626,7 +627,7 @@ grammar Grammar{..} = Grammar{
         FunctionExpression
         <$> optional typeParameterList
         <*> formalParameterList
-        <*> functionBody,
+        <*> functionExpressionBody,
    -- functionExpressionInvocation or a methodInvocation.,
    -- | The invocation of a function resulting from evaluating an expression.
    -- Invocations of methods and other forms of functions are represented by
@@ -665,18 +666,20 @@ grammar Grammar{..} = Grammar{
        <|> constObjectExpression
        <|> newExpression
        <|> FunctionExpression' <$> functionPrimary
-       <|> ParenthesizedExpression <$> (keyword "(" *> expression <* keyword ")")
+       <|> ParenthesizedExpression <$> (delimiter "(" *> expression <* delimiter ")")
        <|> Literal' <$> literal
-       <|> Identifier' <$> identifier,
+--       <|> Identifier' <$> identifier,
+       <|> Identifier' . SimpleIdentifier' <$> simpleIdentifier,
 
    throwExpression= ThrowExpression <$ keyword "throw" <*> expression,
    throwExpressionWithoutCascade= ThrowExpression <$ keyword "throw" <*> expressionWithoutCascade,
 
---   functionExpression= undefined, -- :    formalParameterPart functionExpressionBody
-   --functionExpressionBody= undefined, -- :    '=>' { startNonAsyncFunction(); } expression { endFunction(); }
-   --    |    ASYNC '=>' { startAsyncFunction(); } expression { endFunction(); }
-   --functionExpressionBodyPrefix= undefined, -- :    ASYNC? '=>'
-   functionExpressionWithoutCascade= -- formalParameterPart functionExpressionWithoutCascadeBody,
+   functionExpressionBody=
+        ExpressionFunctionBody
+        <$> flag (keyword "async")
+        <*  delimiter "=>"
+        <*> expression,
+   functionExpressionWithoutCascade=
         FunctionExpression
         <$> optional typeParameterList
         <*> formalParameterList
@@ -685,8 +688,7 @@ grammar Grammar{..} = Grammar{
         ExpressionFunctionBody
         <$> flag (keyword "async")
         <*  delimiter "=>"
-        <*> expressionWithoutCascade
-        <*  delimiter ";",
+        <*> expressionWithoutCascade,
    functionPrimary= 
         FunctionExpression
         <$> optional typeParameterList
