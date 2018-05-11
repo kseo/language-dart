@@ -247,7 +247,7 @@ grammar Grammar{..} = Grammar{
        <*  delimiter ";",
     -- A constructor declaration.
    constructorDeclaration=
-       constructorSignature <*> optional functionBody
+       constructorSignature <*> (Just <$> functionBody <|> Nothing <$ delimiter ";")
        <|> uncurry (ConstructorDeclaration Nothing [] False False False) 
            <$> constructorName 
            <*> formalParameterList 
@@ -279,7 +279,7 @@ grammar Grammar{..} = Grammar{
        delimiter ":" *> sepBy1 constructorInitializer (delimiter ","),
    -- | A method declaration.
    methodDeclaration=
-        methodSignature <*> functionBody,
+        methodSignature <*> (functionBody <|> EmptyFunctionBody <$ delimiter ";"),
    methodSignature=
         uncurry <$> (MethodDeclaration Nothing []
                      <$> flag (keyword "external")
@@ -585,7 +585,6 @@ grammar Grammar{..} = Grammar{
         <*> simpleIdentifier,
    functionBody=
         blockFunctionBody
-        <|> emptyFunctionBody
         <|> expressionFunctionBody,
    -- | A function body that consists of a block of statements.
    blockFunctionBody=
@@ -595,10 +594,6 @@ grammar Grammar{..} = Grammar{
              <|> SyncStar <$ keyword "sync" <* delimiter "*"
              <|> pure Sync)
         <*> block,
-   -- | An empty function body, which can only appear in constructors or abstract
-   -- methods.
-   emptyFunctionBody=
-        EmptyFunctionBody <$ delimiter ";",
    -- | A function body consisting of a single expression.
    expressionFunctionBody=
         ExpressionFunctionBody

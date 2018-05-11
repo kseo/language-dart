@@ -132,7 +132,7 @@ data Grammar p = Grammar {
    prefixedIdentifier :: p Identifier,
    functionBody :: p FunctionBody,
    blockFunctionBody :: p FunctionBody,
-   emptyFunctionBody :: p FunctionBody,
+--   emptyFunctionBody :: p FunctionBody,
    expressionFunctionBody :: p FunctionBody,
    nativeFunctionBody :: p FunctionBody,
    functionExpression :: p FunctionExpression,
