@@ -31,21 +31,17 @@ grammar Grammar{..} = Grammar{
         MapLiteral
         <$> flag (keyword "const")
         <*> optional typeArguments
-        <*  delimiter "{"
-        <*> sepEndBy mapLiteralEntry (delimiter ",")
-        <*  delimiter "}",
+        <*> braces (sepEndBy mapLiteralEntry (delimiter ",")),
    -- | A list literal.
    listLiteral=
         ListLiteral
         <$> flag (keyword "const")
         <*> optional (delimiter "<" *> typeArguments <* delimiter ">")
-        <*  delimiter "["
-        <*> sepEndBy expression (delimiter ",")
-        <*  delimiter "]",
+        <*> brackets (sepEndBy expression (delimiter ",")),
    -- | An expression embedded in a string interpolation.
    interpolationExpression=
            delimiter "$" *> (InterpolationExpression . Identifier' . SimpleIdentifier' <$> simpleIdentifier)
-       <|> delimiter "$" *> delimiter "{" *> (InterpolationExpression <$> expression) <* delimiter "}",
+       <|> delimiter "$" *> braces (InterpolationExpression <$> expression),
    -- | A non-empty substring of an interpolated string.
    interpolationStringNoSingleQuote=
          InterpolationString <$> (takeCharsWhile1 (`notElem` "\\\'$\r\n")
@@ -215,9 +211,7 @@ grammar Grammar{..} = Grammar{
         <*> ((,) . Just <$> extendsClause <*> optional withClause
              <|> pure (Nothing, Nothing))
         <*> optional implementsClause
-        <*  delimiter "{"
-        <*> many classMember
-        <*  delimiter "}",
+        <*> braces (many classMember),
    classMember= 
             constructorDeclaration 
         <|> fieldDeclaration
@@ -228,10 +222,7 @@ grammar Grammar{..} = Grammar{
         <$> metadata
         <*  keyword "enum"
         <*> simpleIdentifier
-        <*  delimiter "{"
-        <*> sepBy (EnumConstantDeclaration Nothing [] <$> simpleIdentifier) (delimiter ",")
-        <*  moptional (delimiter ",")
-        <*  delimiter "}",
+        <*> braces (sepEndBy (EnumConstantDeclaration Nothing [] <$> simpleIdentifier) (delimiter ",")),
    -- | unit.
    compilationUnitMember=
            NamedCompilationUnitMember 
@@ -479,19 +470,18 @@ grammar Grammar{..} = Grammar{
     -- (normal, named, and positional) in any order.
    formalParameterList=
         FormalParameterList
-        <$> (delimiter "(" *> pure [] <* delimiter ")"
-             <|> delimiter "(" *> normalFormalParameters <> moptional (delimiter "," *> optionalFormalParameters)
-                 <* delimiter ")"
-             <|> delimiter "(" *> optionalFormalParameters <* delimiter ")"),
+        <$> parens (pure []
+                    <|> normalFormalParameters <> moptional (delimiter "," *> optionalFormalParameters)
+                    <|> optionalFormalParameters),
    normalFormalParameters=
         sepBy1 (NormalFormalParameter' <$> normalFormalParameter) (delimiter ","),
    optionalFormalParameters=
         optionalPositionalFormalParameters
         <|> namedFormalParameters,
    optionalPositionalFormalParameters=
-        delimiter "[" *> sepBy1 defaultFormalParameter (delimiter ",") <* delimiter "]",
+        brackets (sepBy1 defaultFormalParameter (delimiter ",")),
    namedFormalParameters=
-        delimiter "{" *> sepBy1 defaultFormalParameter (delimiter ",") <* delimiter "}",
+        braces (sepBy1 defaultFormalParameter (delimiter ",")),
    typeParameter=
         TypeParameter Nothing []
         <$> simpleIdentifier
@@ -502,10 +492,7 @@ grammar Grammar{..} = Grammar{
         <*> sepBy1 typeParameter (delimiter ",")
         <*  delimiter ">",
     -- function, method, or constructor.
-   argumentList=
-            delimiter "("
-         *> (arguments <|> pure (ArgumentList []))
-        <*  delimiter ")",
+   argumentList= parens (arguments <|> pure (ArgumentList [])),
    arguments=
         ArgumentList
         <$> (sepBy1 namedExpression (delimiter ",")
@@ -574,11 +561,7 @@ grammar Grammar{..} = Grammar{
         <*> simpleIdentifier
         <*> optional (delimiter "," *> simpleIdentifier)
         <*  delimiter ")",
-   block=
-        Block
-        <$  delimiter "{"
-        <*> many statement
-        <*  delimiter "}",
+   block= Block <$> braces (many statement),
    simpleIdentifier=
         SimpleIdentifier <$> Lexical.identifier,
    libraryIdentifier=
@@ -666,8 +649,9 @@ grammar Grammar{..} = Grammar{
        <|> constObjectExpression
        <|> newExpression
        <|> FunctionExpression' <$> functionPrimary
-       <|> ParenthesizedExpression <$> (delimiter "(" *> expression <* delimiter ")")
+       <|> ParenthesizedExpression <$> parens expression
        <|> Literal' <$> literal
+--       avoid ambiguity between a qualified identifier and field selector
 --       <|> Identifier' <$> identifier,
        <|> Identifier' . SimpleIdentifier' <$> simpleIdentifier,
 
@@ -894,7 +878,7 @@ grammar Grammar{..} = Grammar{
    assignableSelectorPart=
        concatMany argumentPart <> assignableSelector,
    unconditionalAssignableSelector=
-           Dual . Endo . flip IndexExpressionForTarget <$> (delimiter "[" *> expression <* delimiter "]")
+           Dual . Endo . flip IndexExpressionForTarget <$> brackets expression
        <|> Dual . Endo . flip PropertyAccess <$> (delimiter "." *> simpleIdentifier),
    assignableSelector=
            unconditionalAssignableSelector
@@ -1001,9 +985,7 @@ grammar Grammar{..} = Grammar{
         VariableDeclarationStatement <$> variableDeclarationList <* delimiter ";",
    -- | A for statement.
    forStatement= keyword "for"
-        *>  delimiter "("
-        *>  forLoopParts
-        <*  delimiter ")"
+        *>  parens forLoopParts
         <*> statement,
    forLoopParts=
         uncurry ForStatement
@@ -1037,9 +1019,7 @@ grammar Grammar{..} = Grammar{
    whileStatement=
         WhileStatement
         <$  keyword "while"
-        <*  delimiter "("
-        <*> expression
-        <*  delimiter ")"
+        <*> parens expression
         <*> statement,
    -- | A do statement.
    doStatement=
@@ -1047,27 +1027,19 @@ grammar Grammar{..} = Grammar{
         <$  keyword "do"
         <*> statement
         <*  keyword "while"
-        <*  delimiter "("
-        <*> expression
-        <*  delimiter ")"
+        <*> parens expression
         <*  delimiter ";",
    -- | A switch statement.
    switchStatement=
         SwitchStatement
         <$  keyword "switch"
-        <*   delimiter "("
-        <*> expression
-        <*  delimiter ")"
-        <*  delimiter "{"
-        <*> (many switchCase <> upto 1 switchDefault)
-        <*  delimiter "}",
+        <*> parens expression
+        <*> braces (many switchCase <> upto 1 switchDefault),
    -- | An if statement.
    ifStatement=
         IfStatement
         <$  keyword "if"
-        <*  delimiter "("
-        <*> expression
-        <*  delimiter ")"
+        <*> parens expression
         <*> statement
         <*> optional (keyword "else" *> statement),
    -- | A try statement.
