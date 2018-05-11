@@ -760,8 +760,8 @@ grammar Grammar{..} = Grammar{
            <$> (bitwiseOrExpression <|> SuperExpression <$ keyword "super")
            <*> relationalOperator 
            <*> bitwiseOrExpression
-      <|> IsExpression <$> bitwiseOrExpression <*> flag (delimiter "!")
-                       <*  keyword "is" <*> typeName
+      <|> IsExpression <$> bitwiseOrExpression
+                       <*  keyword "is" <*> flag (delimiter "!") <*> typeName
       <|> AsExpression <$> bitwiseOrExpression
                        <*  keyword "as" <*> typeName
       <|> bitwiseOrExpression,

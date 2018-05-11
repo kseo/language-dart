@@ -257,6 +257,6 @@ reservedWords = ["abstract", "as", "assert", "async", "await", "break",
 endOfLineComment, blockComment :: Parser Grammar String String
 endOfLineComment= string "//" *> takeCharsWhile (/= '\n') <* char '\n'
 blockComment=
-      string "/--  "
+      string "/*"
    *> concatMany (notFollowedBy (string "*/") *> anyToken <> takeCharsWhile (/= '*'))
    <* string "*/"
