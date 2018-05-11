@@ -544,7 +544,7 @@ grammar Grammar{..} = Grammar{
    -- | A case in a switch statement.
    switchCase=
         SwitchCase
-        <$> many (Label <$> simpleIdentifier)
+        <$> many label
         <*  keyword "case"
         <*> expression
         <*  delimiter ":"
@@ -758,8 +758,10 @@ grammar Grammar{..} = Grammar{
            <$> (bitwiseOrExpression <|> SuperExpression <$ keyword "super")
            <*> relationalOperator 
            <*> bitwiseOrExpression
-      <|> IsExpression <$> bitwiseOrExpression <*> flag (delimiter "!") <*> typeName 
-      <|> AsExpression <$> bitwiseOrExpression <*> typeName 
+      <|> IsExpression <$> bitwiseOrExpression <*> flag (delimiter "!")
+                       <*  keyword "is" <*> typeName
+      <|> AsExpression <$> bitwiseOrExpression
+                       <*  keyword "as" <*> typeName
       <|> bitwiseOrExpression,
    relationalOperator=
            delimiter ">" <> delimiter "="
