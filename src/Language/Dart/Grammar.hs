@@ -167,11 +167,18 @@ grammar Grammar{..} = Grammar{
    functionSignature= let applySignature returnType propKwd name typeParams params f body = 
                              f returnType propKwd name (FunctionExpression typeParams params body)
                       in applySignature 
-                         <$> optional typeName
-                         <*> (Get <$ keyword "get" <|> Set <$ keyword "set" <|> pure Empty)
-                         <*> simpleIdentifier
-                         <*> optional typeParameterList
-                         <*> formalParameterList,
+                             <$> optional typeName
+                             <*> (Get <$ keyword "get")
+                             <*> simpleIdentifier
+                             <*> pure Nothing
+                             <*> pure (FormalParameterList [])
+                         <|>
+                         applySignature
+                             <$> optional typeName
+                             <*> (Set <$ keyword "set" <|> pure Empty)
+                             <*> simpleIdentifier
+                             <*> optional typeParameterList
+                             <*> formalParameterList,
    withClause=
         WithClause <$ keyword "with" <*> sepBy typeName (delimiter ","),
    implementsClause=
