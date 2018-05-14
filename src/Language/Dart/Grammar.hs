@@ -153,7 +153,7 @@ grammar Grammar{..} = Grammar{
    variableDeclaration=
         VariableDeclaration <$> simpleIdentifier <*> optional (delimiter "=" *> expression),
    variableDeclarationList=
-        VariableDeclarationList Nothing [] <$> finalConstVarOrType <*> sepBy variableDeclaration (delimiter ","),
+        VariableDeclarationList Nothing [] <$> finalConstVarOrType <*> sepBy1 variableDeclaration (delimiter ","),
    finalConstVarOrType=
         FCVTFinal <$ keyword "final" <*> optional typeName
         <|> FCVTConst <$ keyword "const" <*> optional typeName
