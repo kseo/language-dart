@@ -268,10 +268,14 @@ grammar Grammar{..} = Grammar{
        <*> formalParameterList
        <*> moptional initializerList
        <*> optional (delimiter "=" *> constructorDesignation),
-   constructorDesignation=
-      ConstructorName
-      <$> typeName
-      <*> optional (delimiter "." *> simpleIdentifier),
+    constructorDesignation=
+       do t <- typeName
+          ConstructorName t
+             <$> optional (delimiter "." *> simpleIdentifier
+                           -- exclude the ambiguous case of preceding simple identifier
+                           <* case t
+                              of TypeName SimpleIdentifier'{} Nothing -> empty
+                                 _ -> pure ()),
    constructorName=
        (,) <$> (SimpleIdentifier' <$> simpleIdentifier) <*> optional (delimiter "." *> simpleIdentifier),
    factoryName=
