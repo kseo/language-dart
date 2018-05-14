@@ -23,7 +23,7 @@ library
                        Language.Dart.Syntax
   other-modules:       Language.Dart.GrammarDeclaration
   build-depends:       base >= 4.7 && < 5
-                     , grammatical-parsers >= 0.3 && < 0.4
+                     , grammatical-parsers >= 0.3.1 && < 0.4
                      , parsers >= 0.12.7 && < 0.13
                      , pretty >= 1.1
                      , rank2classes < 1.2

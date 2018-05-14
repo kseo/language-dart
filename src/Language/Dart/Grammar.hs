@@ -4,15 +4,16 @@ module Language.Dart.Grammar (module Language.Dart.Grammar,
                               module Language.Dart.GrammarDeclaration) where
 
 import Control.Applicative
-import Control.Monad (guard)
-import Data.Char (chr, isAlphaNum, isDigit, isHexDigit, isLetter, isSpace)
+import Data.Char (chr, isDigit, isHexDigit)
 import Data.List (intersperse)
 import Data.Monoid (Dual(..), Endo(..), (<>))
 import Numeric (readHex)
 import Text.Grampa hiding (Grammar)
+import Text.Grampa.Combinators (concatSome, count, delimiter, flag, moptional, upto)
 import Text.Grampa.ContextFree.LeftRecursive (Parser)
 import qualified Text.Grampa as Lexical (identifier)
 import qualified Text.Grampa as Grampa
+import Text.Parser.Char (hexDigit)
 import Text.Parser.Combinators (count, sepBy, sepBy1, sepEndBy, try)
 import Text.Parser.Token (braces, brackets, parens)
 import Language.Dart.GrammarDeclaration (Grammar(..), blockComment, endOfLineComment)
@@ -56,10 +57,10 @@ grammar Grammar{..} = Grammar{
                                     <|> '\t' <$ string "t"
                                     <|> '\v' <$ string "v"
                                     <|> chr . fst . head . readHex
-                                        <$> (string "x" *> count 2 hexChar
-                                             <|> string "u" *> (count 4 hexChar
+                                        <$> (string "x" *> count 2 hexDigit
+                                             <|> string "u" *> (count 4 hexDigit
                                                                 <|> string "{"
-                                                                 *> ((:) <$> hexChar <*> upto 4 hexChar)
+                                                                 *> ((:) <$> hexDigit <*> upto 4 hexDigit)
                                                                 <*  string "}"))
                                     <|> satisfyChar (`notElem` "\r\n")),
    singleStringLiteral=
@@ -963,9 +964,6 @@ grammar Grammar{..} = Grammar{
    -- | An index expression.
        indexExpression=
            expression delimiter "[" *> expression <* delimiter "]",
-   -- | An await expression.
-   awaitExpression=
-        AwaitExpression <$ keyword "await" <*> expression,
 -}
 
    statement=
@@ -1116,18 +1114,3 @@ grammar Grammar{..} = Grammar{
              <|> (:[]) <$> partOfDirective),
    declarations=
         many compilationUnitMember}
-
-flag p = True <$ p <|> pure False
-
-upto n p
-   | n > 0 = (:) <$> p <*> upto (pred n) p 
-             <|> pure []
-   | otherwise = pure []
-hexChar = satisfyChar isHexDigit
-
-moptional p = p <|> pure mempty
-
-concatSome p = (<>) <$> p <*> concatMany p
-
-delimiter :: String -> Parser Grammar String String
-delimiter s = lexicalToken (string s) <?> ("delimiter " <> show s)
