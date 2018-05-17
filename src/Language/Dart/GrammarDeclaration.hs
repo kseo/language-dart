@@ -73,6 +73,7 @@ data Grammar p = Grammar {
    initializerList :: p [ConstructorInitializer],
    methodDeclaration :: p ClassMember,
    methodSignature :: p (FunctionBody -> ClassMember),
+   getterSetterSignature :: p (FunctionBody -> ClassMember),
    methodName :: p (Bool, SimpleIdentifier),
    fieldDeclaration :: p ClassMember,
    exportDirective :: p NamespaceDirective,

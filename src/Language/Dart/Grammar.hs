@@ -285,13 +285,23 @@ grammar Grammar{..} = Grammar{
        delimiter ":" *> sepBy1 constructorInitializer (delimiter ","),
    -- | A method declaration.
    methodDeclaration=
-        methodSignature <*> functionBody,
+            methodSignature <*> functionBody
+        <|> getterSetterSignature <*> (EmptyFunctionBody <$ delimiter ";"),
    methodSignature=
         uncurry <$> (MethodDeclaration Nothing []
                      <$> flag (keyword "external")
                      <*> optional (Abstract <$ keyword "abstract" <|> Static <$ keyword "static")
                      <*> optional typeName
                      <*> (Get <$ keyword "get" <|> Set <$ keyword "set" <|> pure Empty))
+                <*> methodName
+                <*> optional typeParameterList
+                <*> optional formalParameterList,
+   getterSetterSignature=
+        uncurry <$> (MethodDeclaration Nothing []
+                     <$> flag (keyword "external")
+                     <*> optional (Abstract <$ keyword "abstract" <|> Static <$ keyword "static")
+                     <*> optional typeName
+                     <*> (Get <$ keyword "get" <|> Set <$ keyword "set"))
                 <*> methodName
                 <*> optional typeParameterList
                 <*> optional formalParameterList,
