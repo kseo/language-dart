@@ -10,7 +10,7 @@ import Data.Monoid (Dual(..), Endo(..), (<>))
 import Numeric (readHex)
 import Text.Grampa hiding (Grammar)
 import Text.Grampa.Combinators (concatSome, count, delimiter, flag, moptional, upto)
-import Text.Grampa.ContextFree.LeftRecursive (Parser)
+import Text.Grampa.ContextFree.LeftRecursive (Parser, longest, peg)
 import qualified Text.Grampa as Lexical (identifier)
 import qualified Text.Grampa as Grampa
 import Text.Parser.Char (hexDigit)
@@ -148,7 +148,7 @@ grammar Grammar{..} = Grammar{
    -- | A symbol literal expression.
    symbolLiteral=
         string "#" *> ((:[]) <$> operator 
-                       <|> sepBy Lexical.identifier (delimiter ".")),
+                       <|> peg (longest $ sepBy Lexical.identifier (delimiter "."))),
     -- class are always children of the class variableDeclarationList.
    variableDeclaration=
         VariableDeclaration <$> simpleIdentifier <*> optional (delimiter "=" *> expression),
