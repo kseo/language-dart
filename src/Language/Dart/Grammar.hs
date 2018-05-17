@@ -248,7 +248,8 @@ grammar Grammar{..} = Grammar{
        <*  delimiter ";",
     -- A constructor declaration.
    constructorDeclaration=
-       constructorSignature <*> (Just <$> functionBody <|> Nothing <$ delimiter ";")
+        -- Can't tell an ordinary constructor apart from a method, so parse it as a method
+       constructorSignature <*> ({- Just <$> functionBody <|> -} Nothing <$ delimiter ";")
        <|> uncurry (ConstructorDeclaration Nothing [] False False False) 
            <$> constructorName 
            <*> formalParameterList 
@@ -284,7 +285,7 @@ grammar Grammar{..} = Grammar{
        delimiter ":" *> sepBy1 constructorInitializer (delimiter ","),
    -- | A method declaration.
    methodDeclaration=
-        methodSignature <*> (functionBody <|> EmptyFunctionBody <$ delimiter ";"),
+        methodSignature <*> functionBody,
    methodSignature=
         uncurry <$> (MethodDeclaration Nothing []
                      <$> flag (keyword "external")
