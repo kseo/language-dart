@@ -883,7 +883,9 @@ grammar Grammar{..} = Grammar{
    --         constructorInvocation
    --         ((assignableSelectorPart) => assignableSelectorPart)+
        <|> primary <**> (appEndo . getDual <$> concatSome assignableSelectorPart)
-       <|> Identifier' <$> identifier,
+--       avoid ambiguity between a qualified identifier and field selector
+--       <|> Identifier' <$> identifier,
+       <|> Identifier' . SimpleIdentifier' <$> simpleIdentifier,
    assignableSelectorPart=
        concatMany argumentPart <> assignableSelector,
    unconditionalAssignableSelector=
