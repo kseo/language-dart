@@ -185,17 +185,18 @@ grammar Grammar{..} = Grammar{
    implementsClause=
         ImplementsClause <$ keyword "implements" <*> sepBy typeName (delimiter ","),
    typeAlias=
-        TypeAlias <$ keyword "typedef" <*> typeAliasBody,
+        TypeAlias <$> typeAliasBody,
    typeAliasBody=
            classTypeAlias
        <|> functionTypeAlias,
    -- | A class type alias.
    classTypeAlias=
-        ClassTypeAlias Nothing []
-        <$> simpleIdentifier
+        (\abstract name typeArgs-> ClassTypeAlias Nothing [] name typeArgs abstract)
+        <$> flag (keyword "abstract")
+        <*  keyword "class"
+        <*> simpleIdentifier
         <*> optional typeParameterList 
         <*  delimiter "="
-        <*> flag (keyword "abstract")
         <*> typeName
         <*> withClause
         <*> optional implementsClause
@@ -203,7 +204,8 @@ grammar Grammar{..} = Grammar{
    -- | A function type alias.
    functionTypeAlias=
         FunctionTypeAlias Nothing []
-        <$> optional typeName
+        <$  keyword "typedef"
+        <*> optional typeName
         <*> simpleIdentifier
         <*> optional typeParameterList
         <*> formalParameterList
