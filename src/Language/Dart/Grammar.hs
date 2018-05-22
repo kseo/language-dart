@@ -27,23 +27,19 @@ grammar Grammar{..} = Grammar{
    typedLiteral=
            listLiteral
        <|> mapLiteral,
-     -- | A literal map.
    mapLiteral=
         MapLiteral
         <$> flag (keyword "const")
         <*> optional typeArguments
         <*> braces (sepEndBy mapLiteralEntry (delimiter ",")),
-   -- | A list literal.
    listLiteral=
         ListLiteral
         <$> flag (keyword "const")
         <*> optional (delimiter "<" *> typeArguments <* delimiter ">")
         <*> brackets (sepEndBy expression (delimiter ",")),
-   -- | An expression embedded in a string interpolation.
    interpolationExpression=
            delimiter "$" *> (InterpolationExpression . Identifier' . SimpleIdentifier' <$> simpleIdentifier)
        <|> delimiter "$" *> braces (InterpolationExpression <$> expression),
-   -- | A non-empty substring of an interpolated string.
    interpolationStringNoSingleQuote=
          InterpolationString <$> (takeCharsWhile1 (`notElem` "\\\'$\r\n")
                                   <|> (:[]) <$> characterEscape),
@@ -67,7 +63,6 @@ grammar Grammar{..} = Grammar{
         SingleStringLiteral'
         <$> (    SimpleStringLiteral <$> simpleStringLiteral
              <|> StringInterpolation <$> stringInterpolation),
-   -- | A string literal expression that does not contain any interpolations.
    simpleStringLiteral=
            rawStringLiteral
        <|> basicStringLiteral,
@@ -92,7 +87,6 @@ grammar Grammar{..} = Grammar{
    singleLineStringLiteral=
            string "'" *> takeCharsWhile (`notElem` "\\\'$\r\n") <* string "'"
        <|> string "\"" *> takeCharsWhile (`notElem` "\\\"$\r\n") <* string "\"",
-   -- | A string interpolation literal.
    stringInterpolation=
       lexicalToken $
             (:) <$  string "'"
@@ -106,7 +100,6 @@ grammar Grammar{..} = Grammar{
    stringLiteral=
            singleStringLiteral
        <|> AdjacentStrings <$> adjacentStrings,
-   -- | Two or more string literals that are implicitly concatenated because of being
    --  adjacent (separated only by whitespace).
    --  While the grammar only allows adjacent strings when all of the strings are of
    --  the same kind (single line or multi-line), this class doesn't enforce that
@@ -131,7 +124,6 @@ grammar Grammar{..} = Grammar{
    exponent=
         lexicalToken $
         (string "e" <|> string "E") <> moptional (string "+" <|> string "-") <> takeCharsWhile1 isDigit,
-   -- | An integer literal expression.
    integerLiteral=
         lexicalToken $
         decimalIntegerLiteral
@@ -142,10 +134,8 @@ grammar Grammar{..} = Grammar{
         fst . head . readHex <$>
         (string "0x" *> takeCharsWhile1 isHexDigit
          <|> string "0X" *> takeCharsWhile1 isHexDigit),
-   -- | A null literal expression.
    nullLiteral=
         NullLiteral <$ keyword "null",
-   -- | A symbol literal expression.
    symbolLiteral=
         string "#" *> ((:[]) <$> operator 
                        <|> peg (longest $ sepBy Lexical.identifier (delimiter "."))),
@@ -189,7 +179,6 @@ grammar Grammar{..} = Grammar{
    typeAliasBody=
            classTypeAlias
        <|> functionTypeAlias,
-   -- | A class type alias.
    classTypeAlias=
         (\abstract name typeArgs-> ClassTypeAlias Nothing [] name typeArgs abstract)
         <$> flag (keyword "abstract")
@@ -201,7 +190,6 @@ grammar Grammar{..} = Grammar{
         <*> withClause
         <*> optional implementsClause
          <* delimiter ";",
-   -- | A function type alias.
    functionTypeAlias=
         FunctionTypeAlias Nothing []
         <$  keyword "typedef"
@@ -210,7 +198,6 @@ grammar Grammar{..} = Grammar{
         <*> optional typeParameterList
         <*> formalParameterList
          <* delimiter ";",
-   -- | The declaration of a class.
    classDeclaration=
         ClassDeclaration Nothing []
         <$> flag (keyword "abstract")
@@ -226,14 +213,12 @@ grammar Grammar{..} = Grammar{
             constructorDeclaration 
         <|> fieldDeclaration
         <|> methodDeclaration,
-   -- | The declaration of an enumeration.
    enumType=
         EnumDeclaration Nothing
         <$> metadata
         <*  keyword "enum"
         <*> simpleIdentifier
         <*> braces (sepEndBy (EnumConstantDeclaration Nothing [] <$> simpleIdentifier) (delimiter ",")),
-   -- | unit.
    compilationUnitMember=
            NamedCompilationUnitMember 
            <$> (classDeclaration
@@ -242,7 +227,6 @@ grammar Grammar{..} = Grammar{
                 -- <|> methodDeclaration
                 <|> enumType)
        <|> topLevelVariableDeclaration,
-   -- | The declaration of one or more top-level variables of the same type.
    topLevelVariableDeclaration=
        TopLevelVariableDeclaration Nothing [] 
        <$> (variableDeclarationList
@@ -285,7 +269,6 @@ grammar Grammar{..} = Grammar{
        (,) <$> identifier <*> optional (delimiter "." *> simpleIdentifier),
    initializerList=
        delimiter ":" *> sepBy1 constructorInitializer (delimiter ","),
-   -- | A method declaration.
    methodDeclaration=
             methodSignature <*> functionBody
         <|> getterSetterSignature <*> (EmptyFunctionBody <$ delimiter ";"),
@@ -310,17 +293,14 @@ grammar Grammar{..} = Grammar{
    methodName=
         (,) False <$> simpleIdentifier
         <|> (,) True <$ keyword "operator" <*> simpleIdentifier,
-   -- | The declaration of one or more fields of the same type.
    fieldDeclaration=
         FieldDeclaration Nothing []
         <$> flag (keyword "static")
         <*> variableDeclarationList
         <*  delimiter ";",
-   -- | name is visible within a name scope.
    namespaceDirective=
         exportDirective
         <|> importDirective,
-   -- | An export directive.
    exportDirective=
         ExportDirective Nothing
         <$> metadata
@@ -329,7 +309,6 @@ grammar Grammar{..} = Grammar{
         <*> pure []  -- configurations
         <*> many combinator
         <*  delimiter ";",
-   -- | An import directive.
    importDirective=
         (ImportDirective Nothing
          <$> metadata
@@ -351,7 +330,6 @@ grammar Grammar{..} = Grammar{
    uriBasedDirective=
         NamespaceDirective <$> namespaceDirective
         <|> partDirective,
-   -- | A part directive.
    partDirective=
         PartDirective Nothing
         <$> metadata
@@ -362,7 +340,6 @@ grammar Grammar{..} = Grammar{
         UriBasedDirective <$> uriBasedDirective
         <|> libraryDirective
         <|> partOfDirective,
-   -- | A part-of directive.
    partOfDirective=
         PartOfDirective Nothing
         <$> metadata
@@ -370,7 +347,6 @@ grammar Grammar{..} = Grammar{
         <*  keyword "of"
         <*> libraryIdentifier
         <*  delimiter ";",
-   -- | A library directive.
    libraryDirective=
         LibraryDirective Nothing
         <$> metadata
@@ -382,22 +358,17 @@ grammar Grammar{..} = Grammar{
         superInvocation
         <|> fieldInitializer
         <|> redirectingConstructorInvocation,
-   -- | The invocation of a constructor in the same class from within a constructor's
-   --   initialization list.
    redirectingConstructorInvocation=
         RedirectingConstructorInvocation
         <$ keyword "this"
         <*> optional (delimiter "." *> simpleIdentifier)
         <*> argumentList,
-   -- | The initialization of a field within a constructor's initialization list.
    fieldInitializer=
         ConstructorFieldInitializer
         <$> flag (keyword "this" <* delimiter ".")
         <*> simpleIdentifier
         <*  delimiter "="
         <*> expression,
-   -- | The invocation of a superclass' constructor from within a constructor's
-   --   initialization list.
    superInvocation=
         SuperConstructorInvocation
         <$  keyword "super"
@@ -406,13 +377,10 @@ grammar Grammar{..} = Grammar{
    combinator=
            hideCombinator
        <|> showCombinator,
-   -- | A combinator that restricts the names being imported to those in a given list.
    showCombinator=
         ShowCombinator
         <$ keyword "show"
         <*> sepBy1 simpleIdentifier (delimiter ","),
-   -- | A combinator that restricts the names being imported to those that are not in
-   -- a given list.
    hideCombinator=
         HideCombinator
         <$ keyword "hide"
@@ -442,7 +410,6 @@ grammar Grammar{..} = Grammar{
         <$  string "#!"
         <*> takeCharsWhile (/= '\n')
         <*  char '\n',
-   -- | The "native" clause in an class declaration.
    nativeClause=
         NativeClause
         <$ keyword "native"
@@ -451,14 +418,12 @@ grammar Grammar{..} = Grammar{
         functionTypedFormalParameter
         <|> fieldFormalParameter
         <|> simpleFormalParameter,
-   -- | A function-typed formal parameter.
    functionTypedFormalParameter=
         FunctionTypedFormalParameter Nothing []
         <$> optional typeName
         <*> simpleIdentifier
         <*> optional typeParameterList
         <*> formalParameterList,
-   -- | A field formal parameter.
    fieldFormalParameter=
         FieldFormalParameter Nothing []
         <$> optional (FCVTFinal <$ keyword "final" <*> optional typeName
@@ -468,7 +433,6 @@ grammar Grammar{..} = Grammar{
         <*> (True <$ keyword "this")
         <*  delimiter "."
         <*> simpleIdentifier,
-   -- | A simple formal parameter.
    simpleFormalParameter=
         SimpleFormalParameter Nothing []
         <$> optional(FVTFinal <$ keyword "final" <*> typeName
@@ -559,14 +523,12 @@ grammar Grammar{..} = Grammar{
    switchMember=
         switchCase
         <|> switchDefault,
-   -- | The default case in a switch statement.
    switchDefault=
         SwitchDefault
         <$> many (Label <$> simpleIdentifier)
         <*  keyword "default"
         <*  delimiter ":"
         <*> many statement,
-   -- | A case in a switch statement.
    switchCase=
         SwitchCase
         <$> many label
@@ -594,8 +556,6 @@ grammar Grammar{..} = Grammar{
    identifier=
         SimpleIdentifier' <$> simpleIdentifier
         <|> prefixedIdentifier,
-   -- | An identifier that is prefixed or an access to an object property where the
-   -- target of the property access is a simple identifier.
    prefixedIdentifier=
         PrefixedIdentifier
         <$> simpleIdentifier
@@ -604,7 +564,6 @@ grammar Grammar{..} = Grammar{
    functionBody=
         blockFunctionBody
         <|> expressionFunctionBody,
-   -- | A function body that consists of a block of statements.
    blockFunctionBody=
         BlockFunctionBody
         <$> (Async <$ keyword "async"
@@ -612,15 +571,12 @@ grammar Grammar{..} = Grammar{
              <|> SyncStar <$ keyword "sync" <* delimiter "*"
              <|> pure Sync)
         <*> block,
-   -- | A function body consisting of a single expression.
    expressionFunctionBody=
         ExpressionFunctionBody
         <$> flag (keyword "async")
         <*  delimiter "=>"
         <*> expression
         <*  delimiter ";",
-   -- | A function body that consists of a native keyword followed by a string
-   -- literal.
    nativeFunctionBody=
         NativeFunctionBody
         <$ keyword "native"
@@ -632,19 +588,11 @@ grammar Grammar{..} = Grammar{
         <*> formalParameterList
         <*> functionExpressionBody,
    -- functionExpressionInvocation or a methodInvocation.,
-   -- | The invocation of a function resulting from evaluating an expression.
-   -- Invocations of methods and other forms of functions are represented by
-   -- methodInvocation nodes. Invocations of getters and setters are represented
-   -- by either prefixedIdentifier or propertyAccess nodes.
    functionExpressionInvocation=
         FunctionExpressionInvocation
         <$> expression
         <*> optional typeArguments
         <*> argumentList,
-   -- | The invocation of either a function or a method. Invocations of functions
-   -- resulting from evaluating an expression are represented by
-   --  functionExpressionInvocation nodes. Invocations of getters and setters are
-   --  represented by either prefixedIdentifier or propertyAccess nodes.
    methodInvocation=
         MethodInvocation
         <$> optional (expression <* delimiter ".")
@@ -916,62 +864,40 @@ grammar Grammar{..} = Grammar{
            assignmentExpression
        <|> conditionalExpression (many cascadeSection)
        <|> throwExpression,
-   -- | A prefix unary expression.
    prefixExpression=
         PrefixExpression <$> prefixOperator <*> expression,
-   -- | A postfix unary expression.
    postfixExpression= PostfixExpression <$> assignableExpression <*> postfixOperator,
-   -- | A binary (infix) expression.
    binaryExpression=
         expression token expression,
-   -- | An assignment expression.
    assignmentExpression=
         AssignmentExpression <$> asignableExpression <*> assignmentOperator <*> expression,
-   -- | An instance creation expression.
    newExpression=
         InstanceCreationExpression
         <$> (NCNew <$ keyword "new" <|> NCConst <$ keyword "const")
         <*> (ConstructorName <$> typeName <*> optional (delimiter "." *> simpleIdentifier))
         <*> argumentList,
-   -- | An as expression.
    asExpression=
         AsExpression <$> bitwiseOrExpression <* keyword "as" <*> typeName,
-   -- | An is expression.
    isExpression=
         IsExpression
         <$> bitwiseOrExpression
         <*  keyword "is"
         <*> flag (delimiter "!")
         <*> typeName,
-   -- | A throw expression.
    throwExpression=
         ThrowExpression <$ keyword "throw" <*> expression,
-   -- | A rethrow expression.
    rethrowExpression=
         RethrowExpression <$ keyword "rethrow",
-   -- | A this expression.
    thisExpression=
         ThisExpression <$ keyword "this",
-   -- | A super expression.
    superExpression=
         SuperExpression <$ keyword "super",
-   -- | A parenthesized expression.
    parenthesizedExpression=
         delimiter "(" *> expression <* delimiter ")",
-   -- | The access of a property of an object.
-   -- Note, however, that accesses to properties of objects can also be represented
-   -- as prefixedIdentifier nodes in cases where the target is also a simple
-   -- identifier.
    propertyAccess=
         expression delimiter "." *> simpleIdentifier,
-   -- | An expression that has a name associated with it. They are used in method
-   -- invocations when there are named parameters.
-   -- | A conditional expression.
        conditionalExpression=
            expression delimiter "?" *> expression delimiter ":" *> expression,
-   -- | A sequence of cascaded expressions: expressions that share a common target.
-   -- There are three kinds of expressions that can be used in a cascade
-   -- expression: indexExpression, methodInvocation and propertyAccess.
        cascadeExpression=
            expression (many cascadeSection),
        cascadeSection=
@@ -980,7 +906,6 @@ grammar Grammar{..} = Grammar{
        cascadeSelector=
            '[ ' expression '] '
        <|> identifier,
-   -- | An index expression.
        indexExpression=
            expression delimiter "[" *> expression <* delimiter "]",
 -}
@@ -1000,11 +925,8 @@ grammar Grammar{..} = Grammar{
         <|> returnStatement
         <|> expressionStatement
         <|> FunctionDeclarationStatement <$> functionDeclaration,
-   -- | A list of variables that are being declared in a context where a statement is
-   -- required.
    variableDeclarationStatement=
         VariableDeclarationStatement <$> variableDeclarationList <* delimiter ";",
-   -- | A for statement.
    forStatement= keyword "for"
         *>  parens forLoopParts
         <*> statement,
@@ -1019,7 +941,6 @@ grammar Grammar{..} = Grammar{
         ($ Nothing) . (,) . Just <$> variableDeclarationList
         <|> (,) Nothing <$> optional expression,
 --        <|> optional (VariableDeclarationList Nothing [] FCVTVar . (:[]) . VariableDeclaration undefined . Just <$> expression),
-   -- | A for-each statement.
    forEachStatement=
         (ForEachStatementWithDeclaration
          <$> flag (keyword "await")
@@ -1036,13 +957,11 @@ grammar Grammar{..} = Grammar{
         <*> expression
         <*  delimiter ")"
         <*> statement,
-   -- | A while statement.
    whileStatement=
         WhileStatement
         <$  keyword "while"
         <*> parens expression
         <*> statement,
-   -- | A do statement.
    doStatement=
         DoStatement
         <$  keyword "do"
@@ -1050,20 +969,17 @@ grammar Grammar{..} = Grammar{
         <*  keyword "while"
         <*> parens expression
         <*  delimiter ";",
-   -- | A switch statement.
    switchStatement=
         SwitchStatement
         <$  keyword "switch"
         <*> parens expression
         <*> braces (many switchCase <> upto 1 switchDefault),
-   -- | An if statement.
    ifStatement=
         IfStatement
         <$  keyword "if"
         <*> parens expression
         <*> statement
         <*> optional (keyword "else" *> statement),
-   -- | A try statement.
    tryStatement=
         uncurry . TryStatement
         <$  keyword "try"
@@ -1072,30 +988,24 @@ grammar Grammar{..} = Grammar{
              <|> (,) [] . Just <$> finallyClause),
    finallyClause=
         keyword "finally" *> block,
-   -- | A break statement.
    breakStatement=
         BreakStatement
         <$  keyword "break"
         <*> optional simpleIdentifier
         <*  delimiter ";",
-   -- | A continue statement.
    continueStatement=
         ContinueStatement
         <$  keyword "continue"
         <*> optional simpleIdentifier
         <*  delimiter ";",
-   -- | A return statement.
    returnStatement=
         ReturnStatement
         <$  keyword "return"
         <*> optional expression
         <*  delimiter ";",
-   -- | An expression used as a statement.
    expressionStatement=
         ExpressionStatement <$> expression <*  delimiter ";"
         <|> emptyStatement,
-   -- | A functionDeclaration used as a statement.,
-   -- | An assert statement.
    assertStatement=
         AssertStatement
         <$  keyword "assert"
@@ -1104,17 +1014,14 @@ grammar Grammar{..} = Grammar{
         <*> optional (delimiter "," *> expression)
         <*  delimiter ")"
         <*  delimiter ";",
-   -- | A yield statement.
    yieldStatement=
         YieldStatement
         <$  keyword "yield"
         <*> flag (delimiter "*")
         <*> expression
         <*  delimiter ";",
-   -- | An empty statement.
    emptyStatement=
         EmptyStatement <$ delimiter ";",
-   -- | A statement that has a label associated with them.
    labeledStatement=
         LabeledStatement <$> some label <*> statement,
    -- While the grammar restricts the order of the directives and declarations
