@@ -1,34 +1,15 @@
-# For more information, see: https://github.com/commercialhaskell/stack/blob/release/doc/yaml_configuration.md
+resolver: lts-13.30
 
-# Specifies the GHC version and set of packages available (e.g., lts-3.5, nightly-2015-09-21, ghc-7.10.2)
-resolver: lts-11.9
-
-# Local packages, usually specified by relative directory name
 packages:
 - '.'
 
-# Packages to be pulled from upstream that are not in the resolver (e.g., acme-missiles-0.3)
 extra-deps:
-- repr-tree-syb-0.1.1
-- grammatical-parsers-0.3.1
-
-# Override default flag values for local packages and extra-deps
-flags: {}
-
-# Extra package databases containing global packages
-extra-package-dbs: []
-
-# Control whether we use the GHC we find on the path
-# system-ghc: true
-
-# Require a specific version of stack, using version ranges
-# require-stack-version: -any # Default
-# require-stack-version: >= 0.1.4.0
-
-# Override the architecture used by stack, especially useful on Windows
-# arch: i386
-# arch: x86_64
-
-# Extra directories used by stack for building
-# extra-include-dirs: [/path/to/dir]
-# extra-lib-dirs: [/path/to/dir]
+- repr-tree-syb-0.1.1@sha256:b3af0d338ab5273ebfc993ab1a3b10a36febffdfad474fb6ae7c2ab1fdb49702,1100
+- containers-0.5.11.0@sha256:28ad7337057442f75bc689315ab4ec7bdf5e6b2c39668f306672cecd82c02798,16685
+- rank2classes-1.1.0.1@sha256:18f125d0aeb11c8bddb56f487532d860d8d78e613461905d81af114620f12b3c,2245
+- binary-0.8.7.0@sha256:ae3e6cca723ac55c54bbb3fa771bcf18142bc727afd57818e66d6ee6c8044f12,7705
+- template-haskell-2.13.0.0@sha256:555df4a4f47d358ce35f4c0f4371aa4347081fd00288e751838141d6fc7de627,1724
+- git: https://github.com/sigrlami/grampa
+  commit: 0e407dc99735aff261fbee3cbd748c55e4828530
+  subdirs:
+    - grammatical-parsers

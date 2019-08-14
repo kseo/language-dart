@@ -1,0 +1,58 @@
+name: language-dart
+version: '0.2.0.0'
+synopsis: ! 'Manipulating Dart source: abstract syntax and pretty-printer'
+description: Please see README.md
+category: Language
+author: Kwang Yul Seo
+maintainer: Sergey Bushnyak <sergey.bushnyak@sigrlami.eu>
+copyright: Kwang Yul Seo 2016
+license: BSD3
+github: kseo/language-dart
+tested-with: GHC==7.8.4 GHC==7.10.2 GHC==7.10.3
+extra-source-files:
+- README.md
+- CHANGELOG.md
+dependencies:
+- base
+library:
+  source-dirs: src
+  exposed-modules:
+  - Language.Dart.Grammar
+  - Language.Dart.Pretty
+  - Language.Dart.Syntax
+  dependencies:
+  - grammatical-parsers >=0.4
+  - parsers >=0.12.7
+  - pretty >=1.1
+  - rank2classes <1.2
+executables:
+  parse:
+    main: app/Parse.hs
+    other-extensions:
+    - RankNTypes
+    - RecordWildCards
+    - ScopedTypeVariables
+    - FlexibleInstances
+    - DeriveDataTypeable
+    dependencies:
+    - containers >=0.5 && <1.0
+    - repr-tree-syb <0.2
+    - filepath <1.5
+    - pretty >=1
+    - rank2classes <1.2
+    - grammatical-parsers >=0.4
+    - language-dart
+    - optparse-applicative
+tests:
+  language-dart-test:
+    main: Spec.hs
+    source-dirs: test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - hspec
+    - language-dart
+    - raw-strings-qq
+stability: Experimental
