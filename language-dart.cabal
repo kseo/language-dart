@@ -18,10 +18,25 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Language.Dart.Pretty
+  exposed-modules:     Language.Dart.Grammar
+                       Language.Dart.Pretty
                        Language.Dart.Syntax
+  other-modules:       Language.Dart.GrammarDeclaration
   build-depends:       base >= 4.7 && < 5
+                     , grammatical-parsers >= 0.3.1 && < 0.4
+                     , parsers >= 0.12.7 && < 0.13
                      , pretty >= 1.1
+                     , rank2classes < 1.2
+  default-language:    Haskell2010
+
+executable parse
+  main-is:             app/Parse.hs
+  -- other-modules:       
+  other-extensions:    RankNTypes, RecordWildCards, ScopedTypeVariables, FlexibleInstances, DeriveDataTypeable
+  build-depends:       base >= 4.7 && < 5, containers >= 0.5 && < 1.0,
+                       repr-tree-syb < 0.2, filepath < 1.5, pretty >= 1,
+                       rank2classes < 1.2, grammatical-parsers >= 0.3.1 && < 0.4, language-dart,
+                       optparse-applicative
   default-language:    Haskell2010
 
 test-suite language-dart-test

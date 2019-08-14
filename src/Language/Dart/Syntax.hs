@@ -88,7 +88,7 @@ data TypedLiteral
   -- | A list literal.
   --
   --      listLiteral ::=
-  --          'const'? ('<' [TypeName] '>')? '[' ([Expression] ','?)? ']'
+  --          'const'? ('<' [TypeName] (',' [TypeName])* '>')? '[' ([Expression] (',' [Expression])* ','?)? ']'
   | ListLiteral Bool -- isConst
                 (Maybe TypeArgumentList) -- typeArguments
                 [Expression] -- elements
@@ -128,7 +128,7 @@ data SingleStringLiteral
   --      rawStringLiteral ::=
   --          'r' basicStringLiteral
   --
-  --      simpleStringLiteral ::=
+  --      basicStringLiteral ::=
   --          multiLineStringLiteral
   --        | singleLineStringLiteral
   --
@@ -220,8 +220,8 @@ data Literal
   | SymbolLiteral [Token] -- components
   deriving (Eq, Show, Typeable, Generic, Data)
 
-data FinalConstVarOrType = FCVTFinal TypeName
-                         | FCVTConst TypeName
+data FinalConstVarOrType = FCVTFinal (Maybe TypeName)
+                         | FCVTConst (Maybe TypeName)
                          | FCVTType  TypeName
                          | FCVTVar
   deriving (Eq, Show, Typeable, Generic, Data)
@@ -249,7 +249,7 @@ data VariableDeclaration = VariableDeclaration SimpleIdentifier -- name
 --          finalConstVarOrType [VariableDeclaration] (',' [VariableDeclaration])*
 --
 --      finalConstVarOrType ::=
---        | 'final' [TypeName]?
+--          'final' [TypeName]?
 --        | 'const' [TypeName]?
 --        | 'var'
 --        | [TypeName]
@@ -387,7 +387,7 @@ data NamedCompilationUnitMember
 --        | [FunctionDeclaration]
 --        | [MethodDeclaration]
 --        | [VariableDeclaration]
---        | [VariableDeclaration]
+--        | [EnumDeclaration]
 data CompilationUnitMember
   -- | The declaration of one or more top-level variables of the same type.
   --
@@ -898,10 +898,13 @@ data SwitchMember
 --
 --      catchPart ::=
 --          'catch' '(' [SimpleIdentifier] (',' [SimpleIdentifier])? ')'
-data CatchClause = CatchClause (Maybe TypeName) -- exceptionType
-                               SimpleIdentifier -- exceptionParameter
+data CatchClause = CatchClause SimpleIdentifier -- exceptionParameter
                                (Maybe SimpleIdentifier) -- stackTraceParameter
                                Block -- body
+                 |  OnClause TypeName -- exceptionType
+                             (Maybe (SimpleIdentifier, -- exceptionParameter
+                                     Maybe SimpleIdentifier)) -- stackTraceParameter
+                             Block -- body
   deriving (Eq, Show, Typeable, Generic, Data)
 
 -- | A sequence of statements.
@@ -1116,6 +1119,8 @@ data Expression
   --          [Expression] '.' [SimpleIdentifier]
   | PropertyAccess Expression -- target
                    SimpleIdentifier -- propertyName
+  | ConditionalPropertyAccess Expression -- target
+                              SimpleIdentifier -- propertyName
   -- | An expression that has a name associated with it. They are used in method
   --   invocations when there are named parameters.
   --
@@ -1151,7 +1156,8 @@ data Expression
   --
   --      indexExpression ::=
   --          [Expression] '[' [Expression] ']'
-  | IndexExpressionForCasecade Expression -- index
+  | PropertyAccessForCascade SimpleIdentifier -- index
+  | IndexExpressionForCascade Expression -- index
   | IndexExpressionForTarget   Expression -- target
                                Expression -- index
   -- | An await expression.
@@ -1192,7 +1198,7 @@ data Statement
   --          'for' '(' forLoopParts ')' [Statement]
   --
   --      forLoopParts ::=
-  --          forInitializerStatement ';' [Expression]? ';' [Expression]?
+  --          forInitializerStatement ';' [Expression]? ';' (expression (',' expression)*)?
   --
   --      forInitializerStatement ::=
   --          [DefaultFormalParameter]
@@ -1243,7 +1249,7 @@ data Statement
   -- | A try statement.
   --
   --      tryStatement ::=
-  --          'try' [Block] ([CatchClause]+ finallyClause? | finallyClause)
+  --          'try' [Block] (onPart+ finallyClause? | finallyClause)
   --
   --      finallyClause ::=
   --          'finally' [Block]
@@ -1275,7 +1281,7 @@ data Statement
   -- | An assert statement.
   --
   --      assertStatement ::=
-  --          'assert' '(' [Expression] ')' ';'
+  --          'assert' '(' [Expression] (',' expresion)? ')' ';'
   | AssertStatement Expression -- condition
                     (Maybe Expression) -- message
   -- | A yield statement.
