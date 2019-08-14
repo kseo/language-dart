@@ -186,7 +186,7 @@ spec =
                                       , InterpolationExpression (identExp "e")
                                       ]
           try = TryStatement (Block [funStmt "breedMoreLlamas"])
-                             [CatchClause Nothing (SimpleIdentifier "e") Nothing (Block [funStmt1 "print" arg])]
+                             [CatchClause (SimpleIdentifier "e") Nothing (Block [funStmt1 "print" arg])]
                              (Just (Block [funStmt "cleanLlamaStalls"]))
       prettyPrint try `shouldBe` [r|try
 {

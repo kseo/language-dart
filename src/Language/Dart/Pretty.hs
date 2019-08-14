@@ -10,6 +10,8 @@ import Text.Printf (printf)
 
 import Language.Dart.Syntax
 
+import Prelude hiding ((<>))
+
 -- FIXME: Don't omit comments
 
 prettyPrint :: Pretty a => a -> String
@@ -267,8 +269,8 @@ instance Pretty Label where
   prettyPrec p (Label label) = prettyPrec p label <> char ':'
 
 instance Pretty FinalConstVarOrType where
-  prettyPrec p (FCVTFinal type')  = text "final" <+> prettyPrec p type'
-  prettyPrec p (FCVTConst type')  = text "const" <+> prettyPrec p type'
+  prettyPrec p (FCVTFinal type')  = text "final" <+> maybe empty (prettyPrec p) type'
+  prettyPrec p (FCVTConst type')  = text "const" <+> maybe empty (prettyPrec p) type'
   prettyPrec p (FCVTType type')   = prettyPrec p type'
   prettyPrec p FCVTVar            = text "var"
 
@@ -289,12 +291,15 @@ instance Pretty VariableDeclarationList where
       prettyPrec p kind <+> hsep (ppIntersperse p comma variables)
 
 instance Pretty CatchClause where
-  prettyPrec p (CatchClause mExceptionType exceptionParameter mStackTraceParameter body) =
-    case mExceptionType of
-      Nothing -> text "catch" <+> parens (ppExceptionParameter p exceptionParameter mStackTraceParameter) $$ prettyPrec p body
-      Just exceptionType -> text "on" <+> prettyPrec p exceptionType $$ prettyPrec p body
+  prettyPrec p (CatchClause exceptionParameter mStackTraceParameter body) =
+      text "catch" <+> parens (ppExceptionParameter p exceptionParameter mStackTraceParameter) $$ prettyPrec p body
     where ppExceptionParameter p ep Nothing = prettyPrec p ep
           ppExceptionParameter p ep (Just stp) = hsep (ppIntersperse p comma [ep, stp])
+  prettyPrec p (OnClause exceptionType Nothing body) =
+     text "on" <+> prettyPrec p exceptionType $$ prettyPrec p body
+  prettyPrec p (OnClause exceptionType (Just (exceptionParameter, mStackTraceParameter)) body) =
+     text "on" <+> prettyPrec p exceptionType
+     <+> prettyPrec p (CatchClause exceptionParameter mStackTraceParameter body)
 
 instance Pretty SwitchMember where
   prettyPrec p (SwitchCase labels expression statements) =
@@ -484,6 +489,12 @@ instance Pretty Expression where
          , prettyPrec p propertyName
          ]
 
+  prettyPrec p (ConditionalPropertyAccess target propertyName) =
+    hcat [ prettyPrec p target
+         , text "?."
+         , prettyPrec p propertyName
+         ]
+
   prettyPrec p (NamedExpression name expression) =
     hsep [ prettyPrec p name <> colon
          , prettyPrec p expression
@@ -504,7 +515,8 @@ instance Pretty Expression where
     let sections = target:cascadeSections
      in parenPrec p 2 $ hsep (ppIntersperse 2 (text "..") sections)
 
-  prettyPrec p (IndexExpressionForCasecade index) = brackets (prettyPrec p index)
+  prettyPrec p (IndexExpressionForCascade index) = brackets (prettyPrec p index)
+  prettyPrec p (PropertyAccessForCascade propertyName) = prettyPrec p propertyName
 
   prettyPrec p (IndexExpressionForTarget target index) =
     prettyPrec p target <> brackets (prettyPrec p index)
