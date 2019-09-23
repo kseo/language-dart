@@ -12,7 +12,7 @@ import Data.Functor.Compose (getCompose)
 import Data.Maybe (fromMaybe)
 import Data.Monoid ((<>))
 import Options.Applicative
-import Text.Grampa (Grammar, ParseResults, fixGrammar, parseComplete, showFailure)
+import Text.Grampa (Grammar, ParseResults, fixGrammar, parseComplete, failureDescription)
 import qualified Text.Grampa.ContextFree.LeftRecursive as LeftRecursive
 import ReprTree
 import System.FilePath (FilePath)
@@ -75,7 +75,7 @@ main' opts@Opts{..} =
        of Right [x] -> succeed optsOutput x
           Right l -> putStrLn ("Ambiguous: " ++ show optsIndex ++ "/" ++ show (length l) ++ " parses")
                      >> succeed optsOutput (l !! optsIndex)
-          Left err -> putStrLn (showFailure contents err 3)
+          Left err -> putStrLn (failureDescription contents err 3)
 
 succeed Pretty = putStrLn . prettyPrint
 succeed Tree = putStrLn . reprTreeString

@@ -1,10 +1,11 @@
-# Dart source manipultation library
+# Dart source manipulation library
 
 [![Hackage](https://img.shields.io/hackage/v/language-dart.svg?style=flat)](https://hackage.haskell.org/package/language-dart)
 [![Build Status](https://travis-ci.org/kseo/language-dart.svg?branch=master)](https://travis-ci.org/kseo/language-dart)
 
 A library for manipulating Dart programming language source code:
 - abstract syntax
+- parser
 - pretty-printer
 
 # Maintainers
