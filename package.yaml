@@ -21,10 +21,10 @@ library:
   - Language.Dart.Pretty
   - Language.Dart.Syntax
   dependencies:
-  - grammatical-parsers >=0.4
+  - grammatical-parsers >=0.4 && <0.5
   - parsers >=0.12.7
   - pretty >=1.1
-  - rank2classes <1.2
+  - rank2classes <1.4
 executables:
   parse:
     main: app/Parse.hs
@@ -39,8 +39,8 @@ executables:
     - repr-tree-syb <0.2
     - filepath <1.5
     - pretty >=1
-    - rank2classes <1.2
-    - grammatical-parsers >=0.4
+    - rank2classes <1.4
+    - grammatical-parsers >=0.4 && <0.5
     - language-dart
     - optparse-applicative
 tests:
